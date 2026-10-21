@@ -4,27 +4,43 @@
   /* ---------- Mobiel menu ---------- */
   var toggle = document.querySelector('.nav-toggle');
   var nav = document.getElementById('main-nav');
-  function setMenu(open) {
+  var mobileMq = window.matchMedia('(max-width: 1100px)');
+  function isOpen() { return toggle.getAttribute('aria-expanded') === 'true'; }
+  function focusables() {
+    return [toggle].concat(Array.prototype.slice.call(nav.querySelectorAll('a[href], button:not([disabled])')));
+  }
+  function setMenu(open, opts) {
     toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Menu sluiten' : 'Menu openen');
     nav.classList.toggle('is-open', open);
     document.body.classList.toggle('nav-open', open);
+    if (open) {
+      nav.scrollTop = 0;
+      var first = nav.querySelector('a[href]');
+      if (first) first.focus();
+    } else if (opts && opts.returnFocus) {
+      toggle.focus();
+    }
   }
   if (toggle && nav) {
-    toggle.addEventListener('click', function () {
-      setMenu(toggle.getAttribute('aria-expanded') !== 'true');
-    });
+    toggle.addEventListener('click', function () { setMenu(!isOpen(), { returnFocus: true }); });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
-        setMenu(false);
-        toggle.focus();
+      if (!isOpen()) return;
+      if (e.key === 'Escape') { e.preventDefault(); setMenu(false, { returnFocus: true }); return; }
+      if (e.key === 'Tab') {
+        // Houd de focus binnen het geopende menu (hamburger/sluitknop + menu-items).
+        var items = focusables().filter(function (el) { return el.offsetParent !== null; });
+        var idx = items.indexOf(document.activeElement);
+        var next = e.shiftKey ? (idx <= 0 ? items.length - 1 : idx - 1) : (idx === -1 || idx === items.length - 1 ? 0 : idx + 1);
+        e.preventDefault();
+        items[next].focus();
       }
     });
     nav.addEventListener('click', function (e) {
-      if (e.target.closest('a')) setMenu(false);
+      if (e.target.closest('a') && isOpen()) setMenu(false);
     });
-    window.matchMedia('(min-width: 1101px)').addEventListener('change', function (mq) {
-      if (mq.matches) setMenu(false);
-    });
+    var onMq = function () { if (!mobileMq.matches && isOpen()) setMenu(false); };
+    if (mobileMq.addEventListener) mobileMq.addEventListener('change', onMq); else mobileMq.addListener(onMq);
   }
 
   /* ---------- Header-schaduw bij scrollen ---------- */

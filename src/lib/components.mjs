@@ -21,14 +21,40 @@ export const routes = {
   voorwaarden: '/algemene-voorwaarden/',
 };
 
+// `label` = desktopheader, `long` = volledige naam in het mobiele menu; `mobileOnly` verbergt het item op desktop.
 const nav = [
+  { href: routes.home, label: 'Home', mobileOnly: true },
   { href: routes.diensten, label: 'Diensten' },
-  { href: routes.kantoren, label: 'Voor kantoren' },
-  { href: routes.mkb, label: 'Voor mkb' },
+  { href: routes.kantoren, label: 'Voor kantoren', long: 'Voor administratie- en accountantskantoren' },
+  { href: routes.mkb, label: 'Voor mkb', long: 'Voor mkb-bedrijven' },
   { href: routes.over, label: 'Over Yukify' },
   { href: routes.faq, label: 'Veelgestelde vragen' },
   { href: routes.contact, label: 'Contact' },
 ];
+
+/* ---------- Sociale profielen (alleen tonen met een geldige, ingestelde URL) ---------- */
+const socialDefs = [
+  { key: 'linkedin', iconName: 'linkedin', label: 'Volg Yukify op LinkedIn', hosts: ['linkedin.com', 'www.linkedin.com', 'nl.linkedin.com'] },
+  { key: 'instagram', iconName: 'instagram', label: 'Volg Yukify op Instagram', hosts: ['instagram.com', 'www.instagram.com'] },
+];
+function validProfileUrl(value, hosts) {
+  try {
+    const u = new URL(value);
+    return u.protocol === 'https:' && hosts.includes(u.hostname) && u.pathname.length > 1;
+  } catch {
+    return false;
+  }
+}
+export const socialProfiles = socialDefs
+  .filter((d) => validProfileUrl((site.social || {})[d.key] || '', d.hosts))
+  .map((d) => ({ ...d, url: site.social[d.key] }));
+
+export function socialLinks(cls = '') {
+  if (!socialProfiles.length) return '';
+  return `<ul class="social-links ${cls}">${socialProfiles
+    .map((p) => `<li><a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" aria-label="${p.label}">${icon(p.iconName)}</a></li>`)
+    .join('')}</ul>`;
+}
 
 /* ---------- Logo (vectorversie van het aangeleverde Yukify-logo) ---------- */
 // variant 'light' = voor lichte achtergronden, 'dark' = voor donkergroene achtergronden.
@@ -62,30 +88,44 @@ export function button(label, href, { variant = 'primary', size = '', arrow = fa
   return `<a class="${cls}" href="${href}" ${attrs}>${iconName ? icon(iconName) : ''}<span>${label}</span>${arrow ? icon('arrowRight') : ''}</a>`;
 }
 
-export function whatsappButton({ variant = 'whatsapp', label = 'Stuur een WhatsApp-bericht' } = {}) {
+export function whatsappButton({ variant = 'whatsapp', label = 'WhatsApp ons' } = {}) {
   if (!whatsappEnabled) return '';
-  return button(label, whatsappUrl, { variant, iconName: 'whatsapp', attrs: 'target="_blank" rel="noopener"' });
+  return button(label, whatsappUrl, { variant, iconName: 'whatsapp', attrs: 'target="_blank" rel="noopener noreferrer"' });
+}
+
+export function phoneButton({ variant = 'outline', label = 'Bel Yukify' } = {}) {
+  if (!phoneEnabled) return '';
+  return button(label, telUrl, { variant, iconName: 'phone', attrs: `aria-label="${label}: ${site.phone.display}"` });
 }
 
 /* ---------- Header & footer ---------- */
 function header(currentPath) {
   const links = nav
-    .map((n) => `<li><a href="${n.href}"${currentPath === n.href ? ' aria-current="page"' : ''}>${n.label}</a></li>`)
+    .map(
+      (n) =>
+        `<li${n.mobileOnly ? ' class="nav-mobile-only"' : ''}><a href="${n.href}"${currentPath === n.href ? ' aria-current="page"' : ''}>${
+          n.long ? `<span class="nav-label-short">${n.label}</span><span class="nav-label-long">${n.long}</span>` : n.label
+        }</a></li>`,
+    )
     .join('');
   return `<header class="site-header" id="top">
   <div class="container header-inner">
     ${brand()}
     <nav class="main-nav" id="main-nav" aria-label="Hoofdmenu">
-      <ul>${links}</ul>
+      <ul class="nav-list">${links}</ul>
       <div class="mobile-nav-contact">
         ${button('Plan een kennismaking', routes.contact, { variant: 'primary', arrow: true })}
-        ${button(site.email, `mailto:${site.email}`, { variant: 'outline', iconName: 'mail' })}
-        ${whatsappButton({ label: 'WhatsApp' })}
+        <div class="mobile-nav-quick">
+          ${phoneButton()}
+          ${whatsappButton()}
+        </div>
+        <a class="mobile-nav-mail" href="mailto:${site.email}">${icon('mail')}<span>${site.email}</span></a>
+        ${socialLinks('social-links--light')}
       </div>
     </nav>
-    <a class="btn btn--primary btn--sm header-cta" href="${routes.contact}"><span class="cta-long">Plan een kennismaking</span><span class="cta-short">Contact</span></a>
-    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">
-      <span class="visually-hidden">Menu</span>${icon('menu', { cls: 'icon-open' })}${icon('close', { cls: 'icon-close' })}
+    <a class="btn btn--primary btn--sm header-cta" href="${routes.contact}">Plan een kennismaking</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Menu openen">
+      ${icon('menu', { cls: 'icon-open' })}${icon('close', { cls: 'icon-close' })}
     </button>
   </div>
 </header>`;
@@ -115,6 +155,7 @@ function footer() {
       <nav aria-labelledby="footer-nav-yukify">
         <h2 id="footer-nav-yukify">Yukify</h2>
         <ul>
+          <li><a href="${routes.home}">Home</a></li>
           <li><a href="${routes.kantoren}">Voor administratie- en accountantskantoren</a></li>
           <li><a href="${routes.mkb}">Voor mkb-bedrijven</a></li>
           <li><a href="${routes.over}">Over Yukify</a></li>
@@ -126,11 +167,11 @@ function footer() {
         <h2>Contact</h2>
         <ul class="footer-contact">
           <li>${icon('mail')}<a href="mailto:${site.email}">${site.email}</a></li>
-          ${phoneEnabled ? `<li>${icon('phone')}<a href="${telUrl}">${site.phone.display}</a></li>` : ''}
-          ${whatsappEnabled ? `<li>${icon('whatsapp')}<a href="${whatsappUrl}" target="_blank" rel="noopener">WhatsApp</a></li>` : ''}
+          ${phoneEnabled ? `<li>${icon('phone')}<a href="${telUrl}" aria-label="Bel Yukify: ${site.phone.display}">${site.phone.display}</a></li>` : ''}
+          ${whatsappEnabled ? `<li>${icon('whatsapp')}<a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer">WhatsApp ons</a></li>` : ''}
           <li>${icon('mapPin')}<span>${site.location.city}, ${site.location.country}<br>Ondersteuning op afstand</span></li>
-          <li>${icon('globe')}<a href="${site.url}">www.yukify.nl</a></li>
         </ul>
+        ${socialLinks()}
       </div>
     </div>
     <div class="footer-bottom">
@@ -273,7 +314,7 @@ export function processSteps(steps, { headingLevel = 3 } = {}) {
     .join('')}</ol>`;
 }
 
-export function ctaBand({ title, text, label = 'Plan een kennismaking', href = routes.contact, secondary = true }) {
+export function ctaBand({ title, text, label = 'Plan een kennismaking', href = routes.contact, secondary = true, phone = false }) {
   return `<section class="section section--tight" aria-label="Contact opnemen">
   <div class="container">
     <div class="cta-band reveal">
@@ -283,7 +324,8 @@ export function ctaBand({ title, text, label = 'Plan een kennismaking', href = r
       </div>
       <div class="btn-row">
         ${button(label, href, { variant: 'gold', arrow: true })}
-        ${secondary ? (whatsappEnabled ? whatsappButton({ variant: 'outline-light', label: 'WhatsApp' }) : button('Mail ons', `mailto:${site.email}`, { variant: 'outline-light', iconName: 'mail' })) : ''}
+        ${secondary ? (whatsappEnabled ? whatsappButton({ variant: 'outline-light' }) : button('Mail ons', `mailto:${site.email}`, { variant: 'outline-light', iconName: 'mail' })) : ''}
+        ${phone ? phoneButton({ variant: 'outline-light' }) : ''}
       </div>
     </div>
   </div>
@@ -429,10 +471,10 @@ export function contactItems({ includeLocation = true } = {}) {
     `<li><a class="contact-item" href="mailto:${site.email}"><span class="icon-badge">${icon('mail')}</span><div><small>E-mail</small><span>${site.email}</span></div></a></li>`,
   ];
   if (phoneEnabled)
-    items.push(`<li><a class="contact-item" href="${telUrl}"><span class="icon-badge">${icon('phone')}</span><div><small>Telefoon</small><span>${site.phone.display}</span></div></a></li>`);
+    items.push(`<li><a class="contact-item" href="${telUrl}" aria-label="Bel Yukify: ${site.phone.display}"><span class="icon-badge">${icon('phone')}</span><div><small>Bel Yukify</small><span>${site.phone.display}</span></div></a></li>`);
   if (whatsappEnabled)
     items.push(
-      `<li><a class="contact-item" href="${whatsappUrl}" target="_blank" rel="noopener"><span class="icon-badge">${icon('whatsapp')}</span><div><small>WhatsApp</small><span>Stuur een bericht</span></div></a></li>`,
+      `<li><a class="contact-item" href="${whatsappUrl}" target="_blank" rel="noopener noreferrer"><span class="icon-badge">${icon('whatsapp')}</span><div><small>WhatsApp</small><span>WhatsApp ons</span></div></a></li>`,
     );
   if (includeLocation)
     items.push(

@@ -18,7 +18,7 @@ Vereist Node.js 20 of hoger.
 
 | Pad | Inhoud |
 | --- | --- |
-| `site.config.mjs` | Bedrijfsgegevens en **publicatieschakelaars** (telefoon/WhatsApp, tarief, dienst 5, oprichter, juridische gegevens) |
+| `site.config.mjs` | Bedrijfsgegevens en **publicatieschakelaars** (telefoon/WhatsApp, sociale profielen, tarief, dienst 5, oprichter, juridische gegevens) |
 | `src/lib/components.mjs` | Herbruikbare componenten: layout, header, footer, logo, knoppen, dienstkaarten, CTA, prijzen, formulier |
 | `src/lib/icons.mjs`, `src/lib/visuals.mjs` | Lijn-iconen en illustraties (inline SVG) |
 | `src/pages/*.mjs` | Inhoud per pagina, inclusief SEO-titel en meta description |
@@ -47,7 +47,7 @@ Controleer `/healthz`: `"mail": true` betekent dat SMTP is ingesteld. Stuur na l
 
 Zie de schakelaars in `site.config.mjs`:
 
-- `phone.confirmed` — telefoonnummer. Opgegeven als "+3106 14856469"; vermoedelijk `+31 6 14856469`. Pas na bevestiging komen tel:- en WhatsApp-links online.
+- `social.linkedin` / `social.instagram` — vul de volledige https-URL van het officiële profiel in; de knoppen verschijnen dan automatisch in de footer en het mobiele menu. Ongeldige of lege URL's worden niet getoond.
 - `pricing.confirmed` — tarief "vanaf € 15 per uur".
 - `offersProcessImprovement` — dienst 5 (procesverbetering en automatisering).
 - `founder` — persoonlijke introductie en foto.

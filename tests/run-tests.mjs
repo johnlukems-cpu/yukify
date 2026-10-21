@@ -45,8 +45,13 @@ const live = await startServer(4100, { RATE_LIMIT_MAX: '10', SMTP_HOST: '127.0.0
 const unconfigured = await startServer(4101, {});
 const BASE = 'http://127.0.0.1:4100';
 
-const pages = ['/', '/diensten/', '/administratiekantoren/', '/mkb/', '/over-yukify/', '/veelgestelde-vragen/', '/contact/', '/privacyverklaring/', '/algemene-voorwaarden/', '/contact/bedankt/', '/contact/niet-verzonden/'];
+const pages = process.env.ONLY ? JSON.parse(process.env.ONLY) : ['/', '/diensten/', '/administratiekantoren/', '/mkb/', '/over-yukify/', '/veelgestelde-vragen/', '/contact/', '/privacyverklaring/', '/algemene-voorwaarden/', '/contact/bedankt/', '/contact/niet-verzonden/'];
 const viewports = { desktop: { width: 1440, height: 900 }, tablet: { width: 820, height: 1180 }, mobile: { width: 390, height: 844 } };
+// Extra breedtes alleen voor overflowcontrole (geen screenshots)
+const extraWidths = { 'w320': { width: 320, height: 640 }, 'w360': { width: 360, height: 740 }, 'w430': { width: 430, height: 932 }, 'w1024': { width: 1024, height: 768 } };
+const TEL = 'tel:+31614856469';
+const WA = 'https://wa.me/31614856469?text=Hallo%20Yukify%2C%20ik%20wil%20graag%20meer%20informatie%20over%20jullie%20administratieve%20ondersteuning.';
+const NAV_PAGES = ['/', '/diensten/', '/administratiekantoren/', '/mkb/', '/over-yukify/', '/veelgestelde-vragen/', '/contact/'];
 
 const browser = await chromium.launch();
 await mkdir('test-results/screenshots', { recursive: true });
@@ -104,14 +109,26 @@ try {
     for (const l of meta.links) {
       if (l.startsWith('/') || l.startsWith('#')) linkTargets.add(l.startsWith('#') ? path + l : l);
       if (l.startsWith('mailto:')) check(l === 'mailto:info@yukify.nl', `${path}: mailto-link ${l}`);
-      if (l.startsWith('tel:') || l.includes('wa.me')) fail(`${path}: onbevestigd telefoon-/WhatsApp-nummer gelinkt: ${l}`);
+      if (l.startsWith('tel:')) check(l === TEL, `${path}: telefoonlink ${l}`);
+      if (l.includes('wa.me')) check(l === WA, `${path}: WhatsApp-link correct`);
+      if (/linkedin|instagram/i.test(l)) fail(`${path}: sociale link zonder ingestelde URL: ${l}`);
     }
 
     // Toegankelijkheid (axe, WCAG 2.1 A/AA)
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     check(axe.violations.length === 0, `${path}: axe WCAG 2.1 AA${axe.violations.length ? ' — ' + axe.violations.map((v) => `${v.id} (${v.nodes.length}): ${v.nodes[0].target}`).join('; ') : ''}`);
 
+    // Contactmogelijkheden in footer
+    const footer = await page.evaluate(() => [...document.querySelectorAll('.site-footer a')].map((a) => a.getAttribute('href')));
+    check(['mailto:info@yukify.nl', 'tel:+31614856469', '/privacyverklaring/', '/algemene-voorwaarden/'].every((h) => footer.includes(h)) && footer.some((h) => h.includes('wa.me/31614856469')), `${path}: footer bevat e-mail, telefoon, WhatsApp en juridische links`);
+    check((await page.textContent('.site-footer')).includes('Paramaribo, Suriname'), `${path}: footer toont locatie`);
+
     // Responsiviteit
+    for (const [name, vp] of Object.entries(extraWidths)) {
+      await page.setViewportSize(vp);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      check(overflow <= 0, `${path} [${name}]: geen horizontale scroll (${overflow}px)`);
+    }
     for (const [name, vp] of Object.entries(viewports)) {
       await page.setViewportSize(vp);
       await page.evaluate(() => document.querySelectorAll('.reveal').forEach((e) => e.classList.add('is-visible')));
@@ -152,21 +169,75 @@ try {
 
   /* ---------- Mobiel menu & toetsenbord ---------- */
   {
-    const ctx = await browser.newContext({ viewport: viewports.mobile });
-    const page = await ctx.newPage();
-    await page.goto(BASE + '/');
-    check(await page.isVisible('.header-cta'), 'mobiel: CTA-knop zichtbaar in header');
-    check(!(await page.isVisible('#main-nav a[href="/diensten/"]')), 'mobiel: menu standaard dicht');
-    await page.click('.nav-toggle');
-    check(await page.isVisible('#main-nav a[href="/diensten/"]'), 'mobiel: menu opent');
-    check((await page.getAttribute('.nav-toggle', 'aria-expanded')) === 'true', 'mobiel: aria-expanded=true');
-    await page.keyboard.press('Escape');
-    check(!(await page.isVisible('#main-nav a[href="/diensten/"]')), 'mobiel: Escape sluit menu');
-    await page.click('.nav-toggle');
-    await page.click('#main-nav a[href="/contact/"]');
-    await page.waitForURL('**/contact/');
-    pass('mobiel: navigeren via menu werkt');
-    await ctx.close();
+    for (const width of [320, 360, 390, 430, 768]) {
+      const ctx = await browser.newContext({ viewport: { width, height: width < 400 ? 640 : 900 }, hasTouch: true });
+      const page = await ctx.newPage();
+      await page.goto(BASE + '/diensten/');
+      const tag = `menu ${width}px`;
+      check(!(await page.isVisible('.header-cta')), `${tag}: geen grote CTA in de mobiele header`);
+      const tb = await page.locator('.nav-toggle').boundingBox();
+      check(tb && tb.width >= 44 && tb.height >= 44 && tb.x + tb.width <= width, `${tag}: hamburgerknop ≥ 44×44 en binnen beeld`);
+      check((await page.getAttribute('.nav-toggle', 'aria-label')) === 'Menu openen', `${tag}: aria-label "Menu openen"`);
+      check(!(await page.isVisible('#main-nav a[href="/diensten/"]')), `${tag}: menu standaard dicht`);
+      check(!(await page.isVisible('.nav-toggle .icon-close')), `${tag}: geen sluiticoon zichtbaar bij gesloten menu`);
+      await page.click('.nav-toggle');
+      check((await page.getAttribute('.nav-toggle', 'aria-expanded')) === 'true' && (await page.getAttribute('.nav-toggle', 'aria-label')) === 'Menu sluiten', `${tag}: aria-expanded=true en label "Menu sluiten"`);
+      check(await page.isVisible('.nav-toggle .icon-close'), `${tag}: sluitknop zichtbaar bij open menu`);
+      const navBox = await page.locator('#main-nav').boundingBox();
+      const vh = page.viewportSize().height;
+      check(navBox && navBox.x >= 0 && navBox.x + navBox.width <= width && navBox.y + navBox.height >= vh - 1, `${tag}: menu vult het scherm onder de header (${Math.round(navBox?.height)}px)`);
+      check(await page.evaluate(() => document.activeElement.closest('#main-nav') !== null), `${tag}: focus gaat naar het menu`);
+      // Alle pagina's bereikbaar, zichtbaar, niet bedekt en groot genoeg
+      for (const href of NAV_PAGES) {
+        const link = page.locator(`#main-nav .nav-list a[href="${href}"]`);
+        await link.scrollIntoViewIfNeeded();
+        const box = await link.boundingBox();
+        const onTop = await link.evaluate((a) => {
+          const r = a.getBoundingClientRect();
+          const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+          return a.contains(el);
+        });
+        check(box && box.height >= 44 && box.x >= 0 && box.x + box.width <= width && onTop, `${tag}: menu-item ${href} zichtbaar, niet bedekt, ≥ 44px hoog`);
+      }
+      for (const sel of [`#main-nav a[href="${TEL}"]`, `#main-nav a[href="${WA}"]`, '#main-nav a[href="mailto:info@yukify.nl"]', '#main-nav a[href="/contact/"].btn']) {
+        const l = page.locator(sel);
+        await l.scrollIntoViewIfNeeded();
+        const box = await l.boundingBox();
+        check(box && box.height >= 44 && box.x >= 0 && box.x + box.width <= width + 0.5, `${tag}: ${sel.slice(0, 50)} in menu, ≥ 44px`);
+      }
+      const ovf = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      check(ovf <= 0, `${tag}: geen horizontale scroll met open menu`);
+      const menuAxe = await new AxeBuilder({ page }).include('#main-nav').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+      check(menuAxe.violations.length === 0, `${tag}: open menu voldoet aan WCAG AA (contrast e.d.)${menuAxe.violations.length ? ' — ' + menuAxe.violations.map((v) => `${v.id}: ${v.nodes[0].target}`).join('; ') : ''}`);
+      const radius = await page.locator('#main-nav .mobile-nav-contact .btn').first().evaluate((el) => getComputedStyle(el).borderRadius);
+      check(parseFloat(radius) > 20, `${tag}: knoppen in menu behouden knopstijl`);
+      if (SHOTS && width === 390) { await page.evaluate(() => (document.getElementById('main-nav').scrollTop = 0)); await page.screenshot({ path: 'test-results/screenshots/menu-open-390.png' }); }
+      // Tab blijft binnen het menu
+      for (let i = 0; i < 20; i++) await page.keyboard.press('Tab');
+      const focused = await page.evaluate(() => (document.activeElement.closest('#main-nav, .nav-toggle') ? 'ok' : document.activeElement.outerHTML.slice(0, 80)));
+      check(focused === 'ok', `${tag}: Tab-focus blijft in het menu${focused === 'ok' ? '' : ' — ' + focused}`);
+      await page.keyboard.press('Escape');
+      check(!(await page.isVisible('#main-nav a[href="/diensten/"]')), `${tag}: Escape sluit menu`);
+      check(await page.evaluate(() => document.activeElement.classList.contains('nav-toggle')), `${tag}: focus terug op de menuknop`);
+      await page.click('.nav-toggle');
+      await page.click('#main-nav .nav-list a[href="/over-yukify/"]');
+      await page.waitForURL('**/over-yukify/');
+      check(!(await page.isVisible('#main-nav a[href="/diensten/"]')), `${tag}: menu dicht na navigeren`);
+      await ctx.close();
+    }
+    // Desktopheader blijft intact
+    {
+      const ctx = await browser.newContext({ viewport: viewports.desktop });
+      const page = await ctx.newPage();
+      await page.goto(BASE + '/');
+      check(await page.isVisible('.header-cta') && !(await page.isVisible('.nav-toggle')), 'desktop: CTA zichtbaar, geen hamburger');
+      let all = true;
+      for (const href of NAV_PAGES.slice(1)) all = all && (await page.isVisible(`#main-nav a[href="${href}"]`));
+      check(all, 'desktop: alle navigatielinks zichtbaar');
+      const heights = await page.evaluate(() => [...document.querySelectorAll('.main-nav .nav-list > li:not(.nav-mobile-only) a')].map((a) => a.getBoundingClientRect().height));
+      check(heights.every((h) => h < 50), 'desktop: navigatielinks op één regel');
+      await ctx.close();
+    }
 
     const ctx2 = await browser.newContext({ viewport: viewports.desktop });
     const p2 = await ctx2.newPage();
@@ -176,7 +247,7 @@ try {
     await p2.keyboard.press('Enter');
     check((await p2.evaluate(() => document.activeElement.id)) === 'main', 'toetsenbord: skiplink springt naar inhoud');
     const focusOutline = await p2.evaluate(() => {
-      const a = document.querySelector('.main-nav a');
+      const a = document.querySelector('.main-nav .nav-list > li:not(.nav-mobile-only) a');
       a.focus();
       return getComputedStyle(a).outlineStyle;
     });

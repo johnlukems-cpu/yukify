@@ -10,18 +10,23 @@ export default {
   email: 'info@yukify.nl',
   location: { city: 'Paramaribo', country: 'Suriname', countryCode: 'SR' },
 
-  // Opgegeven als "+3106 14856469". Waarschijnlijk bedoeld: Nederlands mobiel nummer
-  // 06 14856469 = +31 6 14856469. Pas na bevestiging `confirmed: true` zetten;
-  // tot die tijd worden er geen tel:- en WhatsApp-links gepubliceerd.
+  // Bevestigd door de eigenaar: +31 6 14856469 (telefoon en WhatsApp).
   phone: {
-    confirmed: false,
-    display: '+31 6 1485 6469',
+    confirmed: true,
+    display: '+31 6 14856469',
     e164: '+31614856469',
   },
   whatsapp: {
     // Volgt het telefoonnummer; apart uit te zetten als WhatsApp op een ander nummer draait.
     enabled: true,
     message: 'Hallo Yukify, ik wil graag meer informatie over jullie administratieve ondersteuning.',
+  },
+
+  // Sociale profielen. Vul de volledige https-URL in zodra het officiële profiel bekend is;
+  // knoppen verschijnen dan automatisch in de footer en het mobiele menu. Leeg = niet tonen.
+  social: {
+    linkedin: '',
+    instagram: '',
   },
 
   // Voorgesteld starttarief. Alleen publiceren na definitieve bevestiging.

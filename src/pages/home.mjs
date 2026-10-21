@@ -138,6 +138,7 @@ ${ctaBand({
   title: 'Geef je team meer ruimte om vooruit te komen.',
   text: 'Ontdek hoe Yukify jouw kantoor kan ondersteunen bij terugkerende administratieve werkzaamheden.',
   label: 'Bespreek jouw capaciteitsvraagstuk',
+  phone: true,
 })}
 `,
 };

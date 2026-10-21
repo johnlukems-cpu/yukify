@@ -1,4 +1,4 @@
-import { routes, button, breadcrumbs, contactForm, contactItems, whatsappButton, icon, site } from '../lib/components.mjs';
+import { routes, button, breadcrumbs, contactForm, contactItems, whatsappButton, phoneButton, icon, site } from '../lib/components.mjs';
 
 const path = '/contact/';
 const crumb = [{ name: 'Contact', path }];
@@ -34,7 +34,7 @@ export default {
     <aside aria-labelledby="direct-titel">
       <h2 id="direct-titel" style="font-size:var(--fs-h3)">Direct contact</h2>
       ${contactItems()}
-      ${whatsappButton() ? `<div class="mt-6">${whatsappButton()}</div>` : ''}
+      <div class="btn-row mt-6">${whatsappButton()}${phoneButton()}</div>
       <p class="field-hint mt-6">Yukify werkt vanuit Paramaribo, Suriname. Houd rekening met het tijdsverschil met Nederland; we plannen overleg op een moment dat voor jou goed uitkomt.</p>
 
       <div class="card mt-6">

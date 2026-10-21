@@ -1,4 +1,4 @@
-import { routes, button, icon, breadcrumbs, sectionHead, checkList, feature, processSteps, contactForm, contactItems, whatsappButton } from '../lib/components.mjs';
+import { routes, button, icon, breadcrumbs, sectionHead, checkList, feature, processSteps, contactForm, contactItems, whatsappButton, phoneButton } from '../lib/components.mjs';
 
 const path = '/administratiekantoren/';
 const crumb = [{ name: 'Voor administratie- en accountantskantoren', path }];
@@ -94,7 +94,7 @@ export default {
         <li><div><strong>Kennismaking</strong>We bespreken je werkvoorraad en wat Yukify voor je kantoor kan betekenen.</div></li>
       </ol>
       <div class="mt-6">${contactItems({ includeLocation: false })}</div>
-      ${whatsappButton() ? `<div class="mt-6">${whatsappButton()}</div>` : ''}
+      <div class="btn-row mt-6">${whatsappButton()}${phoneButton()}</div>
     </div>
     ${contactForm({ id: 'aanvraag', variant: 'compact', heading: 'Vraag een kennismaking aan', headingLevel: 3, intro: 'Het invullen duurt ongeveer een minuut.', submitLabel: 'Bespreek jouw capaciteitsvraagstuk', presetOrg: 'kantoor' })}
   </div>

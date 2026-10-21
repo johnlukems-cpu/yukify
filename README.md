@@ -24,7 +24,9 @@ Vereist Node.js 20 of hoger.
 | `src/pages/*.mjs` | Inhoud per pagina, inclusief SEO-titel en meta description |
 | `src/assets/` | CSS (design system) en JavaScript (menu, formulier) |
 | `src/static/` | Favicon, manifest, OG-afbeelding, logo-PNG |
-| `server.mjs` | Webserver + `/api/contact` |
+| `lib/contact.mjs`, `lib/security.mjs` | Formulierverwerking (SMTP) en beveiligingsheaders, gedeeld door beide hostingvarianten |
+| `api/contact.mjs`, `api/health.mjs`, `vercel.json` | Serverless functies en configuratie voor Vercel |
+| `serve.mjs` | Webserver voor eigen Node-hosting (serveert `dist/` + `/api/contact`) |
 | `tests/run-tests.mjs` | End-to-end tests |
 
 ## Contactformulier configureren
@@ -37,7 +39,9 @@ Controleer `/healthz`: `"mail": true` betekent dat SMTP is ingesteld. Stuur na l
 
 ## Hosting
 
-De site heeft een Node-proces nodig voor het formulier (bijv. een VPS, Render, Railway, Fly.io of een Node-hostingpakket). Zet de server achter https en stel daarna `HSTS=true` in. Achter een reverse proxy: `TRUST_PROXY=true`.
+**Vercel (aanbevolen):** koppel de GitHub-repository. `vercel.json` regelt de build (`npm run build` → `dist/`), de beveiligingsheaders en de functie `/api/contact`. Stel de SMTP-variabelen in onder *Project → Settings → Environment Variables* en deploy opnieuw. Controleer daarna `https://<domein>/healthz`.
+
+**Eigen Node-hosting (VPS e.d.):** `npm ci && npm run build && npm start`. Zet de server achter https en stel daarna `HSTS=true` in. Achter een reverse proxy: `TRUST_PROXY=true`.
 
 ## Vóór publicatie te bevestigen
 

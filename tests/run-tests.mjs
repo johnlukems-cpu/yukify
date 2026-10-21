@@ -5,6 +5,8 @@ import { mkdir } from 'node:fs/promises';
 import { SMTPServer } from 'smtp-server';
 import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
+import { readFile } from 'node:fs/promises';
+import { securityHeaders } from '../lib/security.mjs';
 
 const SHOTS = process.env.SHOTS !== 'false';
 const results = [];
@@ -30,7 +32,7 @@ const smtp = new SMTPServer({
 await new Promise((r) => smtp.listen(2525, '127.0.0.1', r));
 
 function startServer(port, extraEnv) {
-  const child = spawn(process.execPath, ['server.mjs'], {
+  const child = spawn(process.execPath, ['serve.mjs'], {
     env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', SMTP_HOST: '', MAIL_FROM: '', ...extraEnv },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -144,6 +146,9 @@ try {
   const hdr = (await fetch(BASE + '/')).headers;
   check(hdr.get('content-security-policy')?.includes("default-src 'self'"), 'Content-Security-Policy header');
   check(hdr.get('x-content-type-options') === 'nosniff', 'X-Content-Type-Options header');
+  const vercel = JSON.parse(await readFile('vercel.json', 'utf8'));
+  const vCsp = vercel.headers[0].headers.find((h) => h.key === 'Content-Security-Policy')?.value;
+  check(vCsp === securityHeaders['Content-Security-Policy'], 'vercel.json bevat dezelfde CSP als de server');
 
   /* ---------- Mobiel menu & toetsenbord ---------- */
   {

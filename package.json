@@ -2,11 +2,10 @@
   "name": "yukify-website",
   "version": "1.0.0",
   "description": "Website voor Yukify — Administratie & Support (www.yukify.nl)",
-  "main": "server.mjs",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "start": "node server.mjs",
-    "dev": "node scripts/build.mjs && node server.mjs",
+    "start": "node serve.mjs",
+    "dev": "node scripts/build.mjs && node serve.mjs",
     "images": "node scripts/generate-images.mjs",
     "test": "node scripts/build.mjs && node tests/run-tests.mjs"
   },

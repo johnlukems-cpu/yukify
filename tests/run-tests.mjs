@@ -140,6 +140,45 @@ try {
     await ctx.close();
   }
 
+  /* ---------- Koppen: geen woordafbreking of overloop ---------- */
+  {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    for (const width of [320, 360, 390, 430, 768, 1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const path of pages) {
+        await page.goto(BASE + path);
+        const issues = await page.evaluate(() => {
+          const out = [];
+          for (const h of document.querySelectorAll('h1, h2, h3, h4')) {
+            if (!h.offsetParent || h.closest('.visually-hidden') || h.classList.contains('visually-hidden')) continue;
+            const cs = getComputedStyle(h);
+            if (cs.hyphens !== 'none') out.push(`hyphens=${cs.hyphens}: ${h.textContent.trim().slice(0, 40)}`);
+            if (h.scrollWidth > h.clientWidth + 1) out.push(`overloop: ${h.textContent.trim().slice(0, 40)}`);
+            const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
+            let n;
+            while ((n = walker.nextNode())) {
+              const re = /\S+/g;
+              let m;
+              while ((m = re.exec(n.textContent))) {
+                const r = document.createRange();
+                r.setStart(n, m.index);
+                r.setEnd(n, m.index + m[0].length);
+                const tops = new Set([...r.getClientRects()].map((x) => Math.round(x.top)));
+                if (tops.size > 1) out.push(`woord gebroken: ${m[0]}`);
+              }
+            }
+          }
+          return out;
+        });
+        check(issues.length === 0, `${path} [${width}px]: koppen zonder afgebroken woorden${issues.length ? ' — ' + issues.join('; ') : ''}`);
+      }
+    }
+    await page.goto(BASE + '/');
+    check((await page.textContent('#hero-titel')).replace(/\s+/g, ' ').trim() === 'Meer capaciteit. Minder administratieve druk.', 'hero-headline heeft de juiste tekst');
+    await ctx.close();
+  }
+
   /* ---------- Interne links en ankers ---------- */
   for (const target of linkTargets) {
     const [p, hash] = target.split('#');

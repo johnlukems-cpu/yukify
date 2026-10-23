@@ -7,7 +7,7 @@ export default {
   path,
   title: 'Contact — plan een kennismaking | Yukify',
   description:
-    'Neem contact op met Yukify voor administratieve ondersteuning op afstand. Plan een vrijblijvende kennismaking via het formulier of mail naar info@yukify.nl.',
+    'Neem contact op met Yukify voor administratieve ondersteuning op afstand. Plan een kennismaking via het formulier of mail naar info@yukifyadministratie.nl.',
   breadcrumbs: crumb,
   jsonLd: [
     {

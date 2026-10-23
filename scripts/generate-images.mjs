@@ -45,7 +45,7 @@ await shot(`<div class="og" style="width:1200px;height:630px;background:#F7F3E8;
     <div style="width:2px;height:170px;background:#C69A5B"></div>
     <div style="font-family:Manrope;font-weight:800;font-size:36px;line-height:1.25;letter-spacing:-1px;color:#183F35;white-space:nowrap">Meer capaciteit.<br><span style="color:#9A7038">Minder administratieve<br>druk.</span></div>
   </div>
-  <div style="position:absolute;left:90px;bottom:40px;font-size:24px;color:#F7F3E8;font-weight:500">Remote administratieve ondersteuning voor Nederlandse kantoren en mkb &nbsp;·&nbsp; www.yukify.nl</div>
+  <div style="position:absolute;left:90px;bottom:40px;font-size:24px;color:#F7F3E8;font-weight:500;white-space:nowrap">Remote administratieve ondersteuning &nbsp;·&nbsp; yukifyadministratie.nl</div>
 </div>`, 1200, 630, 'assets/img/og-yukify.png');
 
 // Logo voor gestructureerde gegevens, 512×512

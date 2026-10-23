@@ -1,4 +1,4 @@
-// Centrale bedrijfsgegevens en publicatieschakelaars voor yukify.nl.
+// Centrale bedrijfsgegevens en publicatieschakelaars voor yukifyadministratie.nl.
 // Zet een schakelaar pas op `true` nadat de eigenaar het gegeven heeft bevestigd.
 
 export default {
@@ -6,8 +6,10 @@ export default {
   fullName: 'Yukify — Administratie & Support',
   descriptor: 'Administratie & Support',
   slogan: 'Meer capaciteit. Minder administratieve druk.',
-  url: 'https://www.yukify.nl',
-  email: 'info@yukify.nl',
+  // Voorkeursdomein (zonder www). Alle canonical URL's, sitemap, Open Graph en JSON-LD gebruiken dit.
+  url: 'https://yukifyadministratie.nl',
+  domain: 'yukifyadministratie.nl',
+  email: 'info@yukifyadministratie.nl',
   location: { city: 'Paramaribo', country: 'Suriname', countryCode: 'SR' },
 
   // Bevestigd door de eigenaar: +31 6 14856469 (telefoon en WhatsApp).

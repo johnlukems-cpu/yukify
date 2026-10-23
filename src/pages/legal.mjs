@@ -11,7 +11,7 @@ ${ph(L.address)}<br>
 ${site.location.city}, ${site.location.country}<br>
 Inschrijving handelsregister: ${ph(L.registration)}<br>
 E-mail: <a href="mailto:${site.email}">${site.email}</a><br>
-Website: <a href="${site.url}/">www.yukify.nl</a></p>`;
+Website: <a href="${site.url}/">${site.domain}</a></p>`;
 
 export const privacyPage = {
   path: '/privacyverklaring/',

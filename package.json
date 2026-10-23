@@ -1,7 +1,7 @@
 {
   "name": "yukify-website",
   "version": "1.0.0",
-  "description": "Website voor Yukify — Administratie & Support (www.yukify.nl)",
+  "description": "Website voor Yukify — Administratie & Support (yukifyadministratie.nl)",
   "scripts": {
     "build": "node scripts/build.mjs",
     "start": "node serve.mjs",

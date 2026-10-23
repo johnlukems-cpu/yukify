@@ -103,6 +103,8 @@
     var btn = form.querySelector('button[type=submit]');
     var btnLabel = btn.querySelector('.btn-label');
     var originalLabel = btnLabel.textContent;
+    var email = escapeHtml(form.getAttribute('data-email') || '');
+    var mailLink = '<a href="mailto:' + email + '">' + email + '</a>';
 
     form.elements.pagina.value = window.location.pathname;
 
@@ -166,13 +168,13 @@
             }
             showStatus(status, 'error',
               '<p><strong>Je bericht is niet verzonden.</strong> ' + escapeHtml(reason) + '</p>' +
-              '<p>Probeer het later opnieuw of mail direct naar <a href="mailto:info@yukify.nl">info@yukify.nl</a>.</p>');
+              '<p>Probeer het later opnieuw of mail direct naar ' + mailLink + '.</p>');
           }
         })
         .catch(function () {
           showStatus(status, 'error',
             '<p><strong>Je bericht is niet verzonden.</strong> Er kon geen verbinding worden gemaakt.</p>' +
-            '<p>Controleer je internetverbinding en probeer het opnieuw, of mail direct naar <a href="mailto:info@yukify.nl">info@yukify.nl</a>.</p>');
+            '<p>Controleer je internetverbinding en probeer het opnieuw, of mail direct naar ' + mailLink + '.</p>');
         })
         .then(function () {
           btn.disabled = false;

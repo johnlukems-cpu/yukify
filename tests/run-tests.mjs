@@ -7,6 +7,8 @@ import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
 import { readFile } from 'node:fs/promises';
 import { securityHeaders } from '../lib/security.mjs';
+import site from '../site.config.mjs';
+const MAILTO = `mailto:${site.email}`;
 
 const SHOTS = process.env.SHOTS !== 'false';
 const results = [];
@@ -41,7 +43,7 @@ function startServer(port, extraEnv) {
     child.stderr.on('data', () => {});
   });
 }
-const live = await startServer(4100, { RATE_LIMIT_MAX: '10', SMTP_HOST: '127.0.0.1', SMTP_PORT: '2525', SMTP_SECURE: 'false', MAIL_FROM: 'Yukify website <website@yukify.nl>', MAIL_TO: 'info@yukify.nl' });
+const live = await startServer(4100, { RATE_LIMIT_MAX: '10', SMTP_HOST: '127.0.0.1', SMTP_PORT: '2525', SMTP_SECURE: 'false', MAIL_FROM: `Yukify website <${site.email}>`, MAIL_TO: site.email });
 const unconfigured = await startServer(4101, {});
 const BASE = 'http://127.0.0.1:4100';
 
@@ -99,7 +101,7 @@ try {
     }
     titles.add(meta.title);
     descriptions.add(meta.desc);
-    check(meta.canonical === `https://www.yukify.nl${path}`, `${path}: canonical`);
+    check(meta.canonical === `https://yukifyadministratie.nl${path}`, `${path}: canonical`);
     check(meta.ogTitle && meta.ogImage, `${path}: Open Graph`);
     check(meta.h1 === 1, `${path}: precies één H1 (${meta.h1})`);
     check(meta.lang === 'nl', `${path}: lang="nl"`);
@@ -108,7 +110,7 @@ try {
     check(meta.jsonLd.every(Boolean), `${path}: geldige JSON-LD (${meta.jsonLd.length})`);
     for (const l of meta.links) {
       if (l.startsWith('/') || l.startsWith('#')) linkTargets.add(l.startsWith('#') ? path + l : l);
-      if (l.startsWith('mailto:')) check(l === 'mailto:info@yukify.nl', `${path}: mailto-link ${l}`);
+      if (l.startsWith('mailto:')) check(l === 'mailto:info@yukifyadministratie.nl', `${path}: mailto-link ${l}`);
       if (l.startsWith('tel:')) check(l === TEL, `${path}: telefoonlink ${l}`);
       if (l.includes('wa.me')) check(l === WA, `${path}: WhatsApp-link correct`);
       if (/linkedin|instagram/i.test(l)) fail(`${path}: sociale link zonder ingestelde URL: ${l}`);
@@ -120,7 +122,7 @@ try {
 
     // Contactmogelijkheden in footer
     const footer = await page.evaluate(() => [...document.querySelectorAll('.site-footer a')].map((a) => a.getAttribute('href')));
-    check(['mailto:info@yukify.nl', 'tel:+31614856469', '/privacyverklaring/', '/algemene-voorwaarden/'].every((h) => footer.includes(h)) && footer.some((h) => h.includes('wa.me/31614856469')), `${path}: footer bevat e-mail, telefoon, WhatsApp en juridische links`);
+    check([MAILTO, 'tel:+31614856469', '/privacyverklaring/', '/algemene-voorwaarden/'].every((h) => footer.includes(h)) && footer.some((h) => h.includes('wa.me/31614856469')), `${path}: footer bevat e-mail, telefoon, WhatsApp en juridische links`);
     check((await page.textContent('.site-footer')).includes('Paramaribo, Suriname'), `${path}: footer toont locatie`);
 
     // Responsiviteit
@@ -177,6 +179,16 @@ try {
     await page.goto(BASE + '/');
     check((await page.textContent('#hero-titel')).replace(/\s+/g, ' ').trim() === 'Meer capaciteit. Minder administratieve druk.', 'hero-headline heeft de juiste tekst');
     await ctx.close();
+  }
+
+  /* ---------- Geen oude domein- of e-mailverwijzingen in de gebouwde site ---------- */
+  {
+    const { readdir } = await import('node:fs/promises');
+    const files = (await readdir('dist', { recursive: true })).filter((f) => /\.(html|xml|txt|js|css|json|webmanifest)$/.test(f));
+    const hits = [];
+    for (const f of files) if (/yukify\.nl|info@yukify\b/i.test(await readFile(`dist/${f}`, 'utf8'))) hits.push(f);
+    check(hits.length === 0, `geen verwijzingen naar yukify.nl of info@yukify.nl in dist/${hits.length ? ' — ' + hits.join(', ') : ''}`);
+    check(site.url === 'https://yukifyadministratie.nl' && site.email === 'info@yukifyadministratie.nl', 'centrale config gebruikt het nieuwe domein en e-mailadres');
   }
 
   /* ---------- Interne links en ankers ---------- */
@@ -238,7 +250,7 @@ try {
         });
         check(box && box.height >= 44 && box.x >= 0 && box.x + box.width <= width && onTop, `${tag}: menu-item ${href} zichtbaar, niet bedekt, ≥ 44px hoog`);
       }
-      for (const sel of [`#main-nav a[href="${TEL}"]`, `#main-nav a[href="${WA}"]`, '#main-nav a[href="mailto:info@yukify.nl"]', '#main-nav a[href="/contact/"].btn']) {
+      for (const sel of [`#main-nav a[href="${TEL}"]`, `#main-nav a[href="${WA}"]`, `#main-nav a[href="${MAILTO}"]`, '#main-nav a[href="/contact/"].btn']) {
         const l = page.locator(sel);
         await l.scrollIntoViewIfNeeded();
         const box = await l.boundingBox();
@@ -344,7 +356,7 @@ try {
     check((await page.textContent('#contact-formulier .form-status')).includes('je bericht is verzonden'), 'formulier: bevestiging na echte verzending');
     check(mails.length === before + 1, 'formulier: e-mail daadwerkelijk ontvangen door SMTP-server');
     const mail = mails.at(-1) || '';
-    check(/To: info@yukify\.nl/i.test(mail) && /Reply-To: .*test@voorbeeld\.nl/i.test(mail) && mail.includes('Testkantoor B.V.') && mail.includes('Ondersteuning bij btw-processen'), 'formulier: e-mail bevat juiste ontvanger, reply-to en velden');
+    check(/To: info@yukifyadministratie\.nl/i.test(mail) && /Reply-To: .*test@voorbeeld\.nl/i.test(mail) && mail.includes('Testkantoor B.V.') && mail.includes('Ondersteuning bij btw-processen'), 'formulier: e-mail bevat juiste ontvanger, reply-to en velden');
     if (SHOTS) await page.screenshot({ path: 'test-results/screenshots/form-success.png' });
 
     // 5. Compact formulier op kantorenpagina

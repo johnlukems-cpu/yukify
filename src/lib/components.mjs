@@ -446,7 +446,7 @@ export function contactForm({ id = 'contact', variant = 'full', heading = 'Stuur
   return `<div class="form-card" id="${id}-formulier">
   <${h} id="${id}-titel">${heading}</${h}>
   ${intro ? `<p class="form-intro">${intro}</p>` : ''}
-  <form class="contact-form" action="/api/contact" method="post" novalidate aria-labelledby="${id}-titel" data-form>
+  <form class="contact-form" action="/api/contact" method="post" novalidate aria-labelledby="${id}-titel" data-form data-email="${site.email}">
     <input type="hidden" name="formulier" value="${variant}">
     ${presetOrg ? `<input type="hidden" name="organisatie" value="${presetOrg}">` : ''}
     <input type="hidden" name="pagina" value="">

@@ -19,7 +19,7 @@ async function walk(d) {
 }
 await walk(out);
 
-const banner = '<div style="background:#C69A5B;color:#102C25;font:600 14px/1.4 Inter,sans-serif;text-align:center;padding:8px 16px">Voorvertoning van yukify.nl — het contactformulier verstuurt in deze voorvertoning geen berichten.</div>';
+const banner = '<div style="background:#C69A5B;color:#102C25;font:600 14px/1.4 Inter,sans-serif;text-align:center;padding:8px 16px">Voorvertoning van yukifyadministratie.nl — het contactformulier verstuurt in deze voorvertoning geen berichten.</div>';
 
 for (const f of files.filter((f) => f.endsWith('.html'))) {
   const relDir = posix.dirname(relative(out, f).split('\\').join('/'));

@@ -1,5 +1,6 @@
 import { routes, button, icon, sectionHead, serviceCard, processSteps, feature, ctaBand, pricingSection, site } from '../lib/components.mjs';
 import { heroVisual } from '../lib/visuals.mjs';
+import { software } from '../lib/software.mjs';
 
 export const collaborationSteps = [
   { title: 'Kennismaken', text: 'We bespreken je huidige werkvoorraad, de werkzaamheden en jouw ondersteuningsbehoefte.' },
@@ -114,6 +115,30 @@ export default {
       ${services.map(serviceCard).join('')}
     </div>
     <p class="mt-6">${button('Bekijk alle diensten', routes.diensten, { variant: 'outline', arrow: true })}</p>
+  </div>
+</section>
+
+<section class="section" id="softwarekennis" aria-labelledby="software-titel">
+  <div class="container">
+    ${sectionHead({ eyebrow: 'Softwarekennis', title: 'Ervaring met financiële software', intro: 'Yukify werkt met de pakketten die veel administratie- en accountantskantoren dagelijks gebruiken. Zo sluiten we aan op jouw bestaande werkwijze.', id: 'software-titel' })}
+    <ul class="software-grid" aria-label="Software waarmee Yukify ervaring heeft">
+      ${software
+        .map(
+          (sw) => `<li class="software-card reveal">
+        <span class="software-icon">${icon(sw.iconName)}</span>
+        <div>
+          <p class="software-category">${sw.category}</p>
+          <h3>${sw.name}</h3>
+          <p class="software-text">${sw.text}</p>
+        </div>
+      </li>`,
+        )
+        .join('')}
+    </ul>
+    <div class="software-note">
+      <p>Werkt jouw kantoor met een ander pakket? In de kennismaking bespreken we welke software je gebruikt en hoe we veilig toegang regelen.</p>
+      <p class="software-disclaimer">De genoemde namen zijn handelsmerken van de betreffende leveranciers. Yukify is geen officiële partner van deze leveranciers; de vermelding beschrijft onze ervaring met de software.</p>
+    </div>
   </div>
 </section>
 

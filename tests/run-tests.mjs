@@ -276,6 +276,43 @@ try {
     check(vh && vh.headers.some((x) => x.key === 'X-Robots-Tag' && x.value === 'noindex') && new RegExp(`^${vh.has[0].value}$`).test('yukify.vercel.app') && !new RegExp(`^${vh.has[0].value}$`).test('www.yukifyadministratie.nl'), 'X-Robots-Tag noindex alleen op *.vercel.app');
   }
 
+  /* ---------- Softwarekennis (homepage) ---------- */
+  {
+    const NAMES = ['Nmbrs', 'AFAS Profit', 'AFAS SB', 'Exact Online', 'Zenvoices', 'Basecone'];
+    const ctx = await browser.newContext({ viewport: viewports.desktop });
+    const page = await ctx.newPage();
+    await page.goto(BASE + '/');
+    const info = await page.evaluate(() => {
+      const ids = [...document.querySelectorAll('main > section')].map((sec) => sec.id || sec.getAttribute('aria-labelledby') || sec.className);
+      const sw = document.getElementById('softwarekennis');
+      return {
+        order: ids,
+        heading: sw?.querySelector('h2')?.textContent.trim(),
+        names: [...(sw?.querySelectorAll('.software-card h3') || [])].map((h) => h.textContent.trim()),
+        imgs: sw ? sw.querySelectorAll('img').length : -1,
+        text: sw?.textContent || '',
+      };
+    });
+    const iDienst = info.order.indexOf('diensten-titel'), iSoft = info.order.indexOf('softwarekennis'), iCta = info.order.findIndex((x) => /cta|Contact/i.test(x));
+    check(iSoft > iDienst && iSoft < info.order.indexOf('proces-titel') && (iCta === -1 || iSoft < iCta), `softwaresectie direct na diensten en vóór de contactoproep (${info.order.join(' > ')})`);
+    check(info.heading === 'Ervaring met financiële software', 'softwaresectie: juiste titel');
+    check(JSON.stringify(info.names) === JSON.stringify(NAMES), `softwaresectie: alle zes pakketten (${info.names.join(', ')})`);
+    check(info.imgs === 0, 'softwaresectie: geen (nagemaakte) logo-afbeeldingen');
+    const claimText = info.text.replace(/Yukify is geen officiële partner van deze leveranciers/, '');
+    check(!/certific|gecertificeerd|partner|expert|specialist/i.test(claimText) && info.text.includes('geen officiële partner'), 'softwaresectie: geen claims over certificering of partnerschap');
+    for (const [w, cols] of [[1440, 3], [820, 2], [390, 1], [320, 1]]) {
+      await page.setViewportSize({ width: w, height: 900 });
+      const n = await page.evaluate(() => getComputedStyle(document.querySelector('.software-grid')).gridTemplateColumns.split(' ').length);
+      check(n === cols, `softwaresectie ${w}px: ${cols} kolom(men) (${n})`);
+      if (SHOTS && (w === 1440 || w === 390)) {
+        await page.evaluate(() => document.querySelectorAll('.reveal').forEach((e) => e.classList.add('is-visible')));
+        await page.waitForTimeout(700);
+        await page.locator('#softwarekennis').screenshot({ path: `test-results/screenshots/software-${w}.png` });
+      }
+    }
+    await ctx.close();
+  }
+
   /* ---------- Interne links en ankers ---------- */
   for (const target of linkTargets) {
     const [p, hash] = target.split('#');

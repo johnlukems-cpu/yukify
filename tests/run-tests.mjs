@@ -18,10 +18,18 @@ const check = (cond, msg) => (cond ? pass(msg) : fail(msg));
 
 /* ---------- Test-SMTP-server ---------- */
 const mails = [];
+// Net als Gmail: inloggen verplicht. Testaccount met een "app-wachtwoord" (zonder spaties).
+const TEST_USER = 'info@yukifyadministratie.nl';
+const TEST_PASS = 'abcdefghijklmnop';
 const smtp = new SMTPServer({
-  authOptional: true,
-  disabledCommands: ['STARTTLS', 'AUTH'],
+  authOptional: false,
+  allowInsecureAuth: true,
+  disabledCommands: ['STARTTLS'],
   logger: false,
+  onAuth(auth, session, cb) {
+    if (auth.username === TEST_USER && auth.password === TEST_PASS) return cb(null, { user: auth.username });
+    return cb(Object.assign(new Error('Username and Password not accepted'), { responseCode: 535 }));
+  },
   onData(stream, session, cb) {
     let raw = '';
     stream.on('data', (c) => (raw += c));
@@ -33,18 +41,27 @@ const smtp = new SMTPServer({
 });
 await new Promise((r) => smtp.listen(2525, '127.0.0.1', r));
 
+const CLEAN_ENV = { SMTP_HOST: '', SMTP_PORT: '', SMTP_SECURE: '', SMTP_USER: '', SMTP_PASS: '', MAIL_FROM: '', MAIL_TO: '', SMTP_REQUIRE_TLS: '' };
+const logs = {};
 function startServer(port, extraEnv) {
   const child = spawn(process.execPath, ['serve.mjs'], {
-    env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', SMTP_HOST: '', MAIL_FROM: '', ...extraEnv },
+    env: { ...process.env, ...CLEAN_ENV, PORT: String(port), HOST: '127.0.0.1', ...extraEnv },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+  logs[port] = '';
+  child.stdout.on('data', (d) => (logs[port] += d));
+  child.stderr.on('data', (d) => (logs[port] += d));
   return new Promise((resolve) => {
     child.stdout.on('data', (d) => d.toString().includes('Server actief') && resolve(child));
-    child.stderr.on('data', () => {});
   });
 }
-const live = await startServer(4100, { RATE_LIMIT_MAX: '10', SMTP_HOST: '127.0.0.1', SMTP_PORT: '2525', SMTP_SECURE: 'false', MAIL_FROM: `Yukify website <${site.email}>`, MAIL_TO: site.email });
+// Lokale test-SMTP zonder TLS; in productie (smtp.gmail.com:465) is TLS altijd aan.
+const SMTP_TEST_ENV = { SMTP_HOST: '127.0.0.1', SMTP_PORT: '2525', SMTP_SECURE: 'false', SMTP_REQUIRE_TLS: 'false', SMTP_USER: TEST_USER };
+// App-wachtwoord zoals Google het toont (met spaties); MAIL_FROM en MAIL_TO bewust leeg → standaardwaarden.
+const live = await startServer(4100, { RATE_LIMIT_MAX: '10', ...SMTP_TEST_ENV, SMTP_PASS: 'abcd efgh ijkl mnop' });
 const unconfigured = await startServer(4101, {});
+const partial = await startServer(4102, { SMTP_HOST: 'smtp.gmail.com' });
+const wrongPass = await startServer(4103, { ...SMTP_TEST_ENV, SMTP_PASS: 'fout-wachtwoord-123' });
 const BASE = 'http://127.0.0.1:4100';
 
 const pages = process.env.ONLY ? JSON.parse(process.env.ONLY) : ['/', '/diensten/', '/administratiekantoren/', '/mkb/', '/over-yukify/', '/veelgestelde-vragen/', '/contact/', '/privacyverklaring/', '/algemene-voorwaarden/', '/contact/bedankt/', '/contact/niet-verzonden/'];
@@ -356,7 +373,7 @@ try {
     check((await page.textContent('#contact-formulier .form-status')).includes('je bericht is verzonden'), 'formulier: bevestiging na echte verzending');
     check(mails.length === before + 1, 'formulier: e-mail daadwerkelijk ontvangen door SMTP-server');
     const mail = mails.at(-1) || '';
-    check(/To: info@yukifyadministratie\.nl/i.test(mail) && /Reply-To: .*test@voorbeeld\.nl/i.test(mail) && mail.includes('Testkantoor B.V.') && mail.includes('Ondersteuning bij btw-processen'), 'formulier: e-mail bevat juiste ontvanger, reply-to en velden');
+    check(/To: info@yukifyadministratie\.nl/i.test(mail) && /From: "?Yukify website"? <info@yukifyadministratie\.nl>/i.test(mail) && /Reply-To: .*test@voorbeeld\.nl/i.test(mail) && mail.includes('Testkantoor B.V.') && mail.includes('Ondersteuning bij btw-processen'), 'formulier: e-mail bevat juiste ontvanger, reply-to en velden');
     if (SHOTS) await page.screenshot({ path: 'test-results/screenshots/form-success.png' });
 
     // 5. Compact formulier op kantorenpagina
@@ -406,6 +423,42 @@ try {
   r = await post(form({ naam: 'Aanval\r\nBcc: slachtoffer@voorbeeld.nl', email: 'inj@voorbeeld.nl' }), 'application/json', 4100);
   const injMail = mails.length > beforeInj ? mails.at(-1) : '';
   check(!/^Bcc:/im.test(injMail), 'geen header-injectie via formuliervelden');
+  /* ---------- E-mailconfiguratie ---------- */
+  {
+    const h1 = await (await fetch('http://127.0.0.1:4101/healthz')).json();
+    check(h1.mail === false && ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'].every((k) => h1.missing.includes(k)), 'healthz zonder configuratie: mail=false, ontbrekende namen getoond');
+    const h2 = await (await fetch('http://127.0.0.1:4102/healthz')).json();
+    check(h2.mail === false && h2.missing.join() === 'SMTP_USER,SMTP_PASS', `gedeeltelijke configuratie herkend (${h2.missing})`);
+    const rp = await post(form({}), 'application/json', 4102);
+    check(rp.status === 503 && (await rp.json()).ok === false, 'gedeeltelijke configuratie: 503, geen succes');
+    const h3 = await (await fetch(BASE + '/healthz')).json();
+    check(h3.mail === true && h3.missing.length === 0, 'healthz met volledige configuratie: mail=true');
+    check(JSON.stringify(h3).indexOf('abcd') === -1, 'healthz toont geen geheimen');
+    const before = mails.length;
+    const rw = await post(form({ email: 'fout-ww@voorbeeld.nl' }), 'application/json', 4103);
+    const jw = await rw.json();
+    check(rw.status === 502 && jw.ok === false && mails.length === before, 'fout app-wachtwoord: 502, geen succes, niets verzonden');
+    await new Promise((r) => setTimeout(r, 200));
+    check(/EAUTH.*app-wachtwoord/.test(logs[4103]), 'log noemt de oorzaak (authenticatie)');
+    check(!logs[4103].includes('fout-wachtwoord-123') && !logs[4100].includes('abcd') && !logs[4100].includes(TEST_PASS), 'geen wachtwoorden in de logs');
+    // Controlescript
+    const runCheck = (args, env) => new Promise((resolve) => {
+      const c = spawn(process.execPath, ['scripts/check-mail.mjs', ...args], { env: { ...process.env, ...CLEAN_ENV, ...env } });
+      let out = '';
+      c.stdout.on('data', (d) => (out += d));
+      c.stderr.on('data', (d) => (out += d));
+      c.on('close', (code) => resolve({ code, out }));
+    });
+    let c = await runCheck([], { ...SMTP_TEST_ENV, SMTP_PASS: 'abcd efgh ijkl mnop' });
+    check(c.code === 0 && c.out.includes('OK — stap: login'), 'check-mail: inloggen lukt');
+    const n = mails.length;
+    c = await runCheck(['--send'], { ...SMTP_TEST_ENV, SMTP_PASS: 'abcd efgh ijkl mnop' });
+    check(c.code === 0 && mails.length === n + 1 && mails.at(-1).includes('Testbericht contactformulier'), 'check-mail --send: testbericht afgeleverd');
+    c = await runCheck([], { ...SMTP_TEST_ENV, SMTP_PASS: 'verkeerd' });
+    check(c.code === 1 && c.out.includes('EAUTH') && !c.out.includes('verkeerd'), 'check-mail: fout wachtwoord gemeld zonder het wachtwoord te tonen');
+    c = await runCheck([], {});
+    check(c.code === 1 && c.out.includes('SMTP_HOST, SMTP_USER, SMTP_PASS'), 'check-mail: ontbrekende variabelen gemeld');
+  }
   // Rate limiting (al meerdere verzoeken gedaan vanaf dit IP)
   let limited = false;
   for (let i = 0; i < 8; i++) if ((await post(form({}), 'application/json')).status === 429) limited = true;
@@ -414,6 +467,8 @@ try {
   await browser.close();
   live.kill();
   unconfigured.kill();
+  partial.kill();
+  wrongPass.kill();
   smtp.close();
 }
 

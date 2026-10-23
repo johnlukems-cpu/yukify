@@ -7,7 +7,8 @@
     "start": "node serve.mjs",
     "dev": "node scripts/build.mjs && node serve.mjs",
     "images": "node scripts/generate-images.mjs",
-    "test": "node scripts/build.mjs && node tests/run-tests.mjs"
+    "test": "node scripts/build.mjs && node tests/run-tests.mjs",
+    "mail:check": "node --env-file=.env.local scripts/check-mail.mjs"
   },
   "license": "UNLICENSED",
   "dependencies": {

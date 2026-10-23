@@ -31,15 +31,22 @@ Vereist Node.js 20 of hoger.
 
 ## Contactformulier configureren
 
-Het formulier verstuurt e-mail via SMTP. Zonder configuratie geeft het formulier een eerlijke foutmelding ("niet verzonden") — er wordt nooit een succes gesimuleerd. Stel deze omgevingsvariabelen in bij de hosting (zie `.env.example`):
+Het formulier verstuurt e-mail via SMTP (nodemailer) vanuit Google Workspace. Zonder geldige configuratie toont het een foutmelding ("niet verzonden"); er wordt nooit een succes gesimuleerd.
 
-`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, `MAIL_TO` (standaard `info@yukifyadministratie.nl`).
+| Variabele | Verplicht | Waarde |
+| --- | --- | --- |
+| `SMTP_HOST` | ja | `smtp.gmail.com` |
+| `SMTP_USER` | ja | `info@yukifyadministratie.nl` |
+| `SMTP_PASS` | ja | app-wachtwoord van dat account (geheim, in Vercel als *Sensitive*) |
+| `SMTP_PORT` / `SMTP_SECURE` | nee | standaard `465` / `true` |
+| `MAIL_TO` | nee | standaard `info@yukifyadministratie.nl` |
+| `MAIL_FROM` | nee | standaard `Yukify website <SMTP_USER>`; alleen het account zelf of een geverifieerde Gmail-alias |
 
-Controleer `/healthz`: `"mail": true` betekent dat SMTP is ingesteld. Stuur na livegang één echt testbericht.
+Controle: `https://<domein>/healthz` toont `"mail": true` en een lege `missing`-lijst. Lokaal testen van inloggen en verzenden: zet de variabelen in `.env.local` (niet committen) en draai `npm run mail:check` (alleen inloggen) of `node --env-file=.env.local scripts/check-mail.mjs --send` (testbericht).
 
 ## Hosting
 
-**Vercel (aanbevolen):** koppel de GitHub-repository. `vercel.json` regelt de build (`npm run build` → `dist/`), de beveiligingsheaders en de functie `/api/contact`. Stel de SMTP-variabelen in onder *Project → Settings → Environment Variables* en deploy opnieuw. Controleer daarna `https://<domein>/healthz`.
+**Vercel (aanbevolen):** koppel de GitHub-repository. `vercel.json` regelt de build (`npm run build` → `dist/`), de beveiligingsheaders en de functie `/api/contact`. Stel de e-mailvariabelen in onder *Project → Settings → Environment Variables* en deploy opnieuw. Controleer daarna `https://<domein>/healthz`.
 
 **Eigen Node-hosting (VPS e.d.):** `npm ci && npm run build && npm start`. Zet de server achter https en stel daarna `HSTS=true` in. Achter een reverse proxy: `TRUST_PROXY=true`.
 
@@ -53,7 +60,7 @@ Handmatig in Vercel (*Project → Settings → Domains*):
 3. Optioneel: laat het oude domein (`yukify.nl`, `www.yukify.nl`) gekoppeld en stel het in als redirect naar `yukifyadministratie.nl`, zodat oude links blijven werken.
 4. Neem de DNS-records over die Vercel bij elk domein toont (meestal een A-record voor `@` en een CNAME voor `www`) in Squarespace. Voeg alleen deze records toe of pas alleen bestaande A/CNAME-records voor `@`/`www` aan; laat MX-, SPF-, DKIM- en DMARC-records ongemoeid.
 
-Handmatig voor het contactformulier (*Settings → Environment Variables*): zet `MAIL_TO=info@yukifyadministratie.nl` en een `MAIL_FROM` op het nieuwe domein, plus de SMTP-gegevens van de mailprovider van dat adres. Controleer dat de SPF/DKIM-records van die provider op `yukifyadministratie.nl` staan. Deploy opnieuw en controleer `/healthz`.
+Voor het contactformulier: zie *Contactformulier configureren* hierboven.
 
 ## Vóór publicatie te bevestigen
 

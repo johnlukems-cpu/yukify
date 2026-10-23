@@ -1,6 +1,6 @@
 import { routes, button, icon, sectionHead, serviceCard, processSteps, feature, ctaBand, pricingSection, site } from '../lib/components.mjs';
 import { heroVisual } from '../lib/visuals.mjs';
-import { software } from '../lib/software.mjs';
+import { softwareGroups } from '../lib/software.mjs';
 
 export const collaborationSteps = [
   { title: 'Kennismaken', text: 'We bespreken je huidige werkvoorraad, de werkzaamheden en jouw ondersteuningsbehoefte.' },
@@ -120,21 +120,29 @@ export default {
 
 <section class="section" id="softwarekennis" aria-labelledby="software-titel">
   <div class="container">
-    ${sectionHead({ eyebrow: 'Softwarekennis', title: 'Ervaring met financiële software', intro: 'Yukify werkt met de pakketten die veel administratie- en accountantskantoren dagelijks gebruiken. Zo sluiten we aan op jouw bestaande werkwijze.', id: 'software-titel' })}
-    <ul class="software-grid" aria-label="Software waarmee Yukify ervaring heeft">
-      ${software
-        .map(
-          (sw) => `<li class="software-card reveal">
-        <span class="software-icon">${icon(sw.iconName)}</span>
-        <div>
-          <p class="software-category">${sw.category}</p>
-          <h3>${sw.name}</h3>
-          <p class="software-text">${sw.text}</p>
-        </div>
-      </li>`,
-        )
-        .join('')}
-    </ul>
+    ${sectionHead({ eyebrow: 'Softwarekennis', title: 'Ervaring met financiële software en tools', intro: 'Yukify werkt met de pakketten die veel administratie- en accountantskantoren dagelijks gebruiken, en met digitale tools die het werk structureren. Zo sluiten we aan op jouw bestaande werkwijze.', id: 'software-titel' })}
+    ${softwareGroups
+      .map(
+        (g) => `<div class="software-group">
+      <h3 class="software-group-title" id="${g.id}">${g.title}</h3>
+      <ul class="software-grid" aria-labelledby="${g.id}">
+        ${g.items
+          .map(
+            (sw) => `<li class="software-card reveal">
+          <span class="software-icon">${icon(sw.iconName)}</span>
+          <div>
+            <p class="software-category">${sw.category}</p>
+            <h4>${sw.name}</h4>
+            <p class="software-text">${sw.text}</p>
+          </div>
+        </li>`,
+          )
+          .join('')}
+      </ul>
+      ${g.note ? `<p class="software-group-note">${icon('shield')}<span>${g.note}</span></p>` : ''}
+    </div>`,
+      )
+      .join('')}
     <div class="software-note">
       <p>Werkt jouw kantoor met een ander pakket? In de kennismaking bespreken we welke software je gebruikt en hoe we veilig toegang regelen.</p>
       <p class="software-disclaimer">De genoemde namen zijn handelsmerken van de betreffende leveranciers. Yukify is geen officiële partner van deze leveranciers; de vermelding beschrijft onze ervaring met de software.</p>

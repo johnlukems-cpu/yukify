@@ -430,7 +430,11 @@ strong { font-weight: 600; color: inherit; }
   margin: 0 0 2px; font-family: var(--font-head); font-size: var(--fs-xs); font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold-text);
 }
-.software-card h3 { font-size: 1.1875rem; margin: 0 0 var(--s-1); }
+.software-card h4 { font-size: 1.1875rem; margin: 0 0 var(--s-1); }
+.software-group + .software-group { margin-top: var(--s-7); }
+.software-group-title { font-size: var(--fs-h4); margin-bottom: var(--s-4); padding-bottom: var(--s-3); border-bottom: 1px solid var(--line); }
+.software-group-note { display: flex; gap: var(--s-2); align-items: flex-start; margin: var(--s-4) 0 0; font-size: var(--fs-sm); color: var(--muted); }
+.software-group-note svg { width: 18px; height: 18px; flex: none; margin-top: 3px; color: var(--green); }
 .software-text { margin: 0; font-size: var(--fs-sm); color: var(--muted); }
 .software-note { margin-top: var(--s-6); max-width: 72ch; }
 .software-note p { color: var(--muted); }

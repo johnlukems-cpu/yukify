@@ -278,7 +278,7 @@ try {
 
   /* ---------- Softwarekennis (homepage) ---------- */
   {
-    const NAMES = ['AFAS Profit', 'AFAS SB', 'Exact Online', 'Online Boekhouden', 'Yuki', 'Zenvoices', 'Basecone'];
+    const NAMES = ['AFAS Profit', 'AFAS SB', 'Exact Online', 'e-Boekhouden.nl', 'Moneybird', 'Online Boekhouden', 'Yuki', 'Zenvoices', 'Basecone', 'AFAS InSite', 'monday.com', 'ChatGPT', 'Claude', 'Gemini'];
     const ctx = await browser.newContext({ viewport: viewports.desktop });
     const page = await ctx.newPage();
     await page.goto(BASE + '/');
@@ -288,21 +288,21 @@ try {
       return {
         order: ids,
         heading: sw?.querySelector('h2')?.textContent.trim(),
-        names: [...(sw?.querySelectorAll('.software-card h3') || [])].map((h) => h.textContent.trim()),
+        names: [...(sw?.querySelectorAll('.software-card h4') || [])].map((h) => h.textContent.trim()),
         imgs: sw ? sw.querySelectorAll('img').length : -1,
         text: sw?.textContent || '',
       };
     });
     const iDienst = info.order.indexOf('diensten-titel'), iSoft = info.order.indexOf('softwarekennis'), iCta = info.order.findIndex((x) => /cta|Contact/i.test(x));
     check(iSoft > iDienst && iSoft < info.order.indexOf('proces-titel') && (iCta === -1 || iSoft < iCta), `softwaresectie direct na diensten en vóór de contactoproep (${info.order.join(' > ')})`);
-    check(info.heading === 'Ervaring met financiële software', 'softwaresectie: juiste titel');
+    check(info.heading === 'Ervaring met financiële software en tools', 'softwaresectie: juiste titel');
     check(JSON.stringify(info.names) === JSON.stringify(NAMES), `softwaresectie: alle ${NAMES.length} pakketten (${info.names.join(', ')})`);
     check(info.imgs === 0, 'softwaresectie: geen (nagemaakte) logo-afbeeldingen');
     const claimText = info.text.replace(/Yukify is geen officiële partner van deze leveranciers/, '');
     check(!/certific|gecertificeerd|partner|expert|specialist/i.test(claimText) && info.text.includes('geen officiële partner'), 'softwaresectie: geen claims over certificering of partnerschap');
     for (const [w, cols] of [[1440, 3], [820, 2], [390, 1], [320, 1]]) {
       await page.setViewportSize({ width: w, height: 900 });
-      const n = await page.evaluate(() => { const ys = [...document.querySelectorAll('.software-card')].map((c) => Math.round(c.getBoundingClientRect().top)); return ys.filter((y) => y === ys[0]).length; });
+      const n = await page.evaluate(() => { const ys = [...document.querySelectorAll('#software-financieel + .software-grid .software-card')].map((c) => Math.round(c.getBoundingClientRect().top)); return ys.filter((y) => y === ys[0]).length; });
       check(n === cols, `softwaresectie ${w}px: ${cols} kolom(men) (${n})`);
       if (SHOTS && (w === 1440 || w === 390)) {
         await page.evaluate(() => document.querySelectorAll('.reveal').forEach((e) => e.classList.add('is-visible')));

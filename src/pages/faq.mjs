@@ -38,7 +38,7 @@ const groups = [
       },
       {
         q: 'Kan Yukify werken met de software die ons kantoor gebruikt?',
-        a: '<p>Dat bespreken we graag per situatie. In de kennismaking inventariseren we welke boekhoud- en documentsoftware je gebruikt. Daarna laten we je eerlijk weten of en hoe we daarmee kunnen werken, en wat er nodig is om veilig toegang te krijgen.</p><p>We hebben onder meer ervaring met AFAS Profit, AFAS SB, Exact Online, Online Boekhouden, Yuki, Zenvoices en Basecone. Bekijk het <a href="/#softwarekennis">overzicht van onze softwarekennis</a>.</p>',
+        a: '<p>Dat bespreken we graag per situatie. In de kennismaking inventariseren we welke boekhoud- en documentsoftware je gebruikt. Daarna laten we je eerlijk weten of en hoe we daarmee kunnen werken, en wat er nodig is om veilig toegang te krijgen.</p><p>We hebben onder meer ervaring met AFAS Profit, AFAS SB, Exact Online, e-Boekhouden.nl, Moneybird, Online Boekhouden, Yuki, Zenvoices en Basecone. Bekijk het <a href="/#softwarekennis">overzicht van onze softwarekennis</a>.</p>',
       },
       {
         q: 'Hoe start ik een samenwerking?',

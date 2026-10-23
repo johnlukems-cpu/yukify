@@ -56,10 +56,12 @@ export const whyItems = [
 
 export default {
   path: '/',
-  title: 'Administratie uitbesteden aan een remote partner | Yukify',
-  ogTitle: 'Yukify — Meer capaciteit. Minder administratieve druk.',
+  title: 'Yukify | Administratieve ondersteuning voor kantoren',
+  ogTitle: 'Yukify — Administratie & Support',
+  ogDescription:
+    'Meer capaciteit. Minder administratieve druk. Administratieve ondersteuning op afstand voor administratie- en accountantskantoren.',
   description:
-    'Yukify ondersteunt administratie- en accountantskantoren en mkb-bedrijven bij het verwerken van financiële administraties. Extra capaciteit, op afstand.',
+    'Yukify biedt administratieve ondersteuning op afstand voor administratie- en accountantskantoren. Meer capaciteit, minder administratieve druk. Ontdek onze ondersteuning.',
   render: () => `
 <section class="hero" aria-labelledby="hero-titel">
   <div class="container hero-grid">

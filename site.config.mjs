@@ -6,8 +6,9 @@ export default {
   fullName: 'Yukify — Administratie & Support',
   descriptor: 'Administratie & Support',
   slogan: 'Meer capaciteit. Minder administratieve druk.',
-  // Voorkeursdomein (zonder www). Alle canonical URL's, sitemap, Open Graph en JSON-LD gebruiken dit.
-  url: 'https://yukifyadministratie.nl',
+  // Voorkeursdomein (met www). Alle canonical URL's, sitemap, Open Graph en JSON-LD gebruiken dit.
+  // Het domein zonder www moet in Vercel doorverwijzen naar deze variant.
+  url: 'https://www.yukifyadministratie.nl',
   domain: 'yukifyadministratie.nl',
   email: 'info@yukifyadministratie.nl',
   location: { city: 'Paramaribo', country: 'Suriname', countryCode: 'SR' },

@@ -108,7 +108,7 @@ function serviceBlock(s) {
 
 export default {
   path: '/diensten/',
-  title: 'Diensten: financiële administratie en btw-ondersteuning | Yukify',
+  title: 'Diensten: administratie, btw en achterstanden | Yukify',
   description:
     'Financiële administratie laten verwerken, hulp bij btw-processen, achterstanden wegwerken of extra capaciteit op afstand. Bekijk de diensten van Yukify.',
   breadcrumbs: [{ name: 'Diensten', path: '/diensten/' }],

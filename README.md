@@ -50,15 +50,15 @@ Controle: `https://<domein>/healthz` toont `"mail": true` en een lege `missing`-
 
 **Eigen Node-hosting (VPS e.d.):** `npm ci && npm run build && npm start`. Zet de server achter https en stel daarna `HSTS=true` in. Achter een reverse proxy: `TRUST_PROXY=true`.
 
-## Domein en e-mail (yukifyadministratie.nl)
+## Domein en SEO (www.yukifyadministratie.nl)
 
-Het voorkeursdomein is `https://yukifyadministratie.nl` (zonder www), ingesteld in `site.config.mjs` (`url`, `domain`, `email`). Canonical URL's, sitemap, robots.txt, Open Graph en JSON-LD volgen automatisch.
+Het voorkeursdomein is `https://www.yukifyadministratie.nl` (met www), ingesteld in `site.config.mjs` (`url`). Canonical URL's, sitemap, robots.txt, Open Graph, Twitter/X-cards en JSON-LD volgen automatisch. Noindex-pagina's (concept-juridische teksten, bevestigingspagina's, 404) krijgen geen canonical en staan niet in de sitemap. Op `*.vercel.app` zet `vercel.json` een `X-Robots-Tag: noindex`, zodat alleen het eigen domein wordt geïndexeerd.
 
 Handmatig in Vercel (*Project → Settings → Domains*):
-1. Voeg `yukifyadministratie.nl` toe en markeer het als productiedomein.
-2. Voeg `www.yukifyadministratie.nl` toe en kies **Redirect to `yukifyadministratie.nl`** (308). Stel de redirect alléén hier in; `vercel.json` bevat bewust geen host-redirect, zodat er geen redirect-loop kan ontstaan.
-3. Optioneel: laat het oude domein (`yukify.nl`, `www.yukify.nl`) gekoppeld en stel het in als redirect naar `yukifyadministratie.nl`, zodat oude links blijven werken.
-4. Neem de DNS-records over die Vercel bij elk domein toont (meestal een A-record voor `@` en een CNAME voor `www`) in Squarespace. Voeg alleen deze records toe of pas alleen bestaande A/CNAME-records voor `@`/`www` aan; laat MX-, SPF-, DKIM- en DMARC-records ongemoeid.
+1. Zorg dat `www.yukifyadministratie.nl` gekoppeld is aan Production (geen redirect).
+2. Stel `yukifyadministratie.nl` (zonder www) in als **Redirect to `www.yukifyadministratie.nl`** (308). Stel de redirect alléén hier in; `vercel.json` bevat bewust geen host-redirect, zodat er geen redirect-loop kan ontstaan.
+3. Optioneel: laat het oude domein (`yukify.nl`, `www.yukify.nl`) gekoppeld als redirect naar `www.yukifyadministratie.nl`.
+4. Neem de DNS-records over die Vercel bij elk domein toont in Squarespace. Pas alleen A/CNAME-records voor `@`/`www` aan; laat MX-, SPF-, DKIM- en DMARC-records ongemoeid.
 
 Voor het contactformulier: zie *Contactformulier configureren* hierboven.
 

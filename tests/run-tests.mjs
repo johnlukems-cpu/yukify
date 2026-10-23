@@ -110,15 +110,17 @@ try {
         try { JSON.parse(s.textContent); return true; } catch { return false; }
       }),
     }));
-    check(meta.title && meta.title.length <= 70, `${path}: title aanwezig (${meta.title.length} tekens)`);
-    if (!meta.robots.includes('noindex')) check(meta.desc && meta.desc.length >= 70 && meta.desc.length <= 160, `${path}: meta description (${meta.desc?.length} tekens)`);
+    check(meta.title && meta.title.length <= 65, `${path}: title aanwezig (${meta.title.length} tekens)`);
+    // Max. 170: de door de eigenaar opgegeven homepage-description is iets langer dan de gebruikelijke 160.
+    if (!meta.robots.includes('noindex')) check(meta.desc && meta.desc.length >= 70 && meta.desc.length <= 170, `${path}: meta description (${meta.desc?.length} tekens)`);
     if (!path.startsWith('/contact/')) {
       check(!titles.has(meta.title), `${path}: unieke title`);
       check(!descriptions.has(meta.desc), `${path}: unieke description`);
     }
     titles.add(meta.title);
     descriptions.add(meta.desc);
-    check(meta.canonical === `https://yukifyadministratie.nl${path}`, `${path}: canonical`);
+    if (meta.robots.includes('noindex')) check(meta.canonical === undefined, `${path}: geen canonical op noindex-pagina`);
+    else check(meta.canonical === `https://www.yukifyadministratie.nl${path}`, `${path}: canonical op www (${meta.canonical})`);
     check(meta.ogTitle && meta.ogImage, `${path}: Open Graph`);
     check(meta.h1 === 1, `${path}: precies één H1 (${meta.h1})`);
     check(meta.lang === 'nl', `${path}: lang="nl"`);
@@ -205,7 +207,73 @@ try {
     const hits = [];
     for (const f of files) if (/yukify\.nl|info@yukify\b/i.test(await readFile(`dist/${f}`, 'utf8'))) hits.push(f);
     check(hits.length === 0, `geen verwijzingen naar yukify.nl of info@yukify.nl in dist/${hits.length ? ' — ' + hits.join(', ') : ''}`);
-    check(site.url === 'https://yukifyadministratie.nl' && site.email === 'info@yukifyadministratie.nl', 'centrale config gebruikt het nieuwe domein en e-mailadres');
+    check(site.url === 'https://www.yukifyadministratie.nl' && site.email === 'info@yukifyadministratie.nl', 'centrale config gebruikt het nieuwe domein en e-mailadres');
+  }
+
+  /* ---------- SEO-metadata (gerenderde HTML) ---------- */
+  {
+    const WWW = 'https://www.yukifyadministratie.nl';
+    const EXPECTED_NOINDEX = ['/privacyverklaring/', '/algemene-voorwaarden/', '/contact/bedankt/', '/contact/niet-verzonden/', '/404.html'];
+    const htmlOf = async (p) => readFile(p === '/404.html' ? 'dist/404.html' : `dist${p}index.html`, 'utf8');
+    const attr = (html, re) => [...html.matchAll(re)].map((m) => m[1]);
+    const allPaths = [...new Set([...pages, '/404.html'])];
+    const indexable = [];
+    for (const p of allPaths) {
+      const html = await htmlOf(p);
+      const count = (re) => (html.match(re) || []).length;
+      const once = ['<title>', 'name="description"', 'name="robots"', 'property="og:type"', 'property="og:site_name"', 'property="og:title"', 'property="og:description"', 'property="og:url"', 'property="og:image"', 'property="og:locale"', 'name="twitter:card"', 'name="twitter:title"', 'name="twitter:description"', 'name="twitter:image"'];
+      const dup = once.filter((t) => count(new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) !== 1);
+      const noindex = /name="robots" content="noindex/.test(html);
+      if (!noindex) indexable.push(p);
+      check(dup.length === 0 && count(/rel="canonical"/g) === (noindex ? 0 : 1), `${p}: elke SEO-tag precies één keer${dup.length ? ' — ' + dup.join(', ') : ''}`);
+      check(!/name="keywords"/.test(html), `${p}: geen meta keywords`);
+      check(attr(html, /property="og:image" content="([^"]+)"/g)[0] === `${WWW}/assets/img/og-yukify.png` && attr(html, /name="twitter:image" content="([^"]+)"/g)[0] === `${WWW}/assets/img/og-yukify.png`, `${p}: OG/Twitter-afbeelding absolute https-URL op www`);
+      check(attr(html, /property="og:url" content="([^"]+)"/g)[0].startsWith(WWW + '/'), `${p}: og:url op www`);
+      check(!/yukify\.vercel\.app|yukify\.nl|https:\/\/yukifyadministratie\.nl/.test(html), `${p}: geen oude of niet-voorkeursdomeinen`);
+    }
+    check(JSON.stringify(allPaths.filter((p) => !indexable.includes(p)).sort()) === JSON.stringify([...EXPECTED_NOINDEX].sort()), `noindex alleen op bedoelde pagina's (${allPaths.filter((p) => !indexable.includes(p)).join(', ')})`);
+
+    // Homepage exact volgens opdracht
+    const home = await htmlOf('/');
+    const meta = (name) => attr(home, new RegExp(`(?:name|property)="${name}" content="([^"]*)"`, 'g'))[0];
+    const dec = (v) => v.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+    check(attr(home, /<title>([^<]*)<\/title>/g)[0] === 'Yukify | Administratieve ondersteuning voor kantoren', 'home: title');
+    check(meta('description') === 'Yukify biedt administratieve ondersteuning op afstand voor administratie- en accountantskantoren. Meer capaciteit, minder administratieve druk. Ontdek onze ondersteuning.', 'home: meta description');
+    check(attr(home, /rel="canonical" href="([^"]+)"/g)[0] === `${WWW}/`, 'home: canonical');
+    check(meta('og:type') === 'website' && dec(meta('og:site_name')) === 'Yukify — Administratie & Support' && dec(meta('og:title')) === 'Yukify — Administratie & Support' && meta('og:url') === `${WWW}/` && meta('og:locale') === 'nl_NL', 'home: og:type/site_name/title/url/locale');
+    check(meta('og:description') === 'Meer capaciteit. Minder administratieve druk. Administratieve ondersteuning op afstand voor administratie- en accountantskantoren.', 'home: og:description');
+    check(meta('twitter:card') === 'summary_large_image', 'home: twitter:card summary_large_image');
+
+    // Unieke titels en beschrijvingen over alle indexeerbare pagina's
+    const titles = [], descs = [];
+    for (const p of indexable) { const h = await htmlOf(p); titles.push(attr(h, /<title>([^<]*)<\/title>/g)[0]); descs.push(attr(h, /name="description" content="([^"]*)"/g)[0]); }
+    check(new Set(titles).size === titles.length && new Set(descs).size === descs.length, 'unieke titles en descriptions op alle indexeerbare pagina\'s');
+
+    // Sitemap en robots.txt
+    const sm = await readFile('dist/sitemap.xml', 'utf8');
+    const locs = attr(sm, /<loc>([^<]+)<\/loc>/g);
+    check(JSON.stringify(locs.sort()) === JSON.stringify(indexable.map((p) => WWW + p).sort()), `sitemap bevat precies de ${indexable.length} indexeerbare pagina's op www`);
+    const robots = await readFile('dist/robots.txt', 'utf8');
+    check(/^User-agent: \*$/m.test(robots) && /^Allow: \/$/m.test(robots) && robots.includes(`Sitemap: ${WWW}/sitemap.xml`) && !/^Disallow: \/$/m.test(robots), 'robots.txt staat indexeren toe en verwijst naar de sitemap op www');
+
+    // Deelafbeelding bestaat en is 1200×630
+    const png = await readFile('dist/assets/img/og-yukify.png');
+    check(png.readUInt32BE(16) === 1200 && png.readUInt32BE(20) === 630, 'og-yukify.png is 1200×630');
+
+    // Gestructureerde gegevens: alleen bevestigde velden
+    const ld = attr(home, /<script type="application\/ld\+json">(.*?)<\/script>/g).map((j) => JSON.parse(j));
+    const org = ld.find((d) => d['@type'] === 'Organization');
+    const web = ld.find((d) => d['@type'] === 'WebSite');
+    check(org && web && org.url === `${WWW}/` && web.url === `${WWW}/`, 'JSON-LD: Organization en WebSite op www');
+    check(org.email === 'info@yukifyadministratie.nl' && org.telephone === '+31614856469' && org.contactPoint.telephone === '+31614856469', 'JSON-LD: e-mail en telefoon kloppen');
+    const forbidden = ['openingHours', 'openingHoursSpecification', 'aggregateRating', 'review', 'priceRange', 'vatID', 'taxID', 'leiCode', 'foundingDate', 'award'];
+    check(forbidden.every((k) => !(k in org)) && !('streetAddress' in org.address) && !('postalCode' in org.address) && !('sameAs' in org), 'JSON-LD: geen verzonnen adres, registratie, openingstijden, reviews, prijzen of sociale profielen');
+    check(home.includes('info@yukifyadministratie.nl') && home.includes('+31 6 14856469') && home.includes('Paramaribo'), 'JSON-LD-gegevens staan ook zichtbaar op de site');
+
+    // vercel.json: noindex-header alleen voor *.vercel.app
+    const vercelCfg = JSON.parse(await readFile('vercel.json', 'utf8'));
+    const vh = vercelCfg.headers.find((h) => h.has && h.has.some((x) => x.type === 'host'));
+    check(vh && vh.headers.some((x) => x.key === 'X-Robots-Tag' && x.value === 'noindex') && new RegExp(`^${vh.has[0].value}$`).test('yukify.vercel.app') && !new RegExp(`^${vh.has[0].value}$`).test('www.yukifyadministratie.nl'), 'X-Robots-Tag noindex alleen op *.vercel.app');
   }
 
   /* ---------- Interne links en ankers ---------- */

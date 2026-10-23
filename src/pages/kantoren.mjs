@@ -21,7 +21,7 @@ const startSteps = [
 
 export default {
   path,
-  title: 'Extra capaciteit voor administratie- en accountantskantoren | Yukify',
+  title: 'Capaciteit voor administratie- en accountantskantoren | Yukify',
   description:
     'Extra capaciteit voor je administratie- of accountantskantoor. Yukify vangt piekbelasting en terugkerend boekingswerk op afstand op, volgens jouw werkwijze.',
   breadcrumbs: crumb,

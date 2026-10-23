@@ -185,11 +185,21 @@ function footer() {
 </footer>`;
 }
 
-/* ---------- Gestructureerde gegevens ---------- */
+/* ---------- Gestructureerde gegevens ----------
+   Alleen bevestigde, op de site zichtbare gegevens: naam, website, e-mail, telefoon, vestigingsplaats.
+   Geen bezoekadres, registratienummer, openingstijden, beoordelingen, prijzen of sociale profielen. */
 export function organizationJsonLd() {
+  const contactPoint = {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    email: site.email,
+    areaServed: 'NL',
+    availableLanguage: ['nl'],
+  };
+  if (site.phone.confirmed) contactPoint.telephone = site.phone.e164;
   const data = {
     '@context': 'https://schema.org',
-    '@type': 'ProfessionalService',
+    '@type': 'Organization',
     '@id': `${site.url}/#organisatie`,
     name: site.fullName,
     alternateName: site.name,
@@ -199,13 +209,28 @@ export function organizationJsonLd() {
     image: `${site.url}/assets/img/og-yukify.png`,
     email: site.email,
     description:
-      'Remote administratieve ondersteuning voor Nederlandse administratie- en accountantskantoren en mkb-ondernemingen: verwerking van financiële administraties, ondersteuning bij btw-processen en het wegwerken van achterstanden.',
+      'Administratieve ondersteuning op afstand voor Nederlandse administratie- en accountantskantoren en mkb-ondernemingen: verwerking van financiële administraties, ondersteuning bij btw-processen en het wegwerken van achterstanden.',
     address: { '@type': 'PostalAddress', addressLocality: site.location.city, addressCountry: site.location.countryCode },
     areaServed: { '@type': 'Country', name: 'Nederland' },
     knowsLanguage: 'nl',
+    contactPoint,
   };
   if (site.phone.confirmed) data.telephone = site.phone.e164;
+  if (socialProfiles.length) data.sameAs = socialProfiles.map((p) => p.url);
   return data;
+}
+
+export function websiteJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${site.url}/#website`,
+    name: site.name,
+    alternateName: site.fullName,
+    url: `${site.url}/`,
+    inLanguage: 'nl-NL',
+    publisher: { '@id': `${site.url}/#organisatie` },
+  };
 }
 
 /* ---------- Pagina-layout ---------- */
@@ -225,7 +250,10 @@ export function layout(page, body) {
         })),
       }
     : null;
-  const jsonLd = [page.path === '/' ? organizationJsonLd() : null, crumbs, ...(page.jsonLd || [])].filter(Boolean);
+  const jsonLd = [...(page.path === '/' ? [organizationJsonLd(), websiteJsonLd()] : []), crumbs, ...(page.jsonLd || [])].filter(Boolean);
+  const ogTitle = page.ogTitle || title;
+  const ogDescription = page.ogDescription || page.description;
+  const ogImageAlt = 'Yukify — Administratie & Support. Meer capaciteit. Minder administratieve druk.';
 
   return `<!doctype html>
 <html lang="nl">
@@ -234,20 +262,24 @@ export function layout(page, body) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(page.description)}">
-${page.noindex ? '<meta name="robots" content="noindex, follow">' : '<meta name="robots" content="index, follow">'}
-<link rel="canonical" href="${canonical}">
+${page.noindex ? '<meta name="robots" content="noindex, follow">' : `<meta name="robots" content="index, follow, max-image-preview:large">\n<link rel="canonical" href="${canonical}">`}
 <meta name="theme-color" content="#183F35">
 <meta property="og:type" content="${page.ogType || 'website'}">
 <meta property="og:locale" content="nl_NL">
 <meta property="og:site_name" content="${esc(site.fullName)}">
-<meta property="og:title" content="${esc(page.ogTitle || title)}">
-<meta property="og:description" content="${esc(page.description)}">
+<meta property="og:title" content="${esc(ogTitle)}">
+<meta property="og:description" content="${esc(ogDescription)}">
 <meta property="og:url" content="${canonical}">
 <meta property="og:image" content="${ogImage}">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Yukify — Meer capaciteit. Minder administratieve druk.">
+<meta property="og:image:alt" content="${esc(ogImageAlt)}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(ogTitle)}">
+<meta name="twitter:description" content="${esc(ogDescription)}">
+<meta name="twitter:image" content="${ogImage}">
+<meta name="twitter:image:alt" content="${esc(ogImageAlt)}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">

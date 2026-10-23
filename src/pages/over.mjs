@@ -28,7 +28,7 @@ function founderSection() {
 
 export default {
   path,
-  title: 'Over Yukify — remote administratieve ondersteuning | Yukify',
+  title: 'Over Yukify — administratieve ondersteuning op afstand',
   description:
     'Yukify ondersteunt Nederlandse organisaties vanuit Paramaribo bij financiële administratieve verwerking. Meer dan 10 jaar ervaring in financiële administratie.',
   breadcrumbs: crumb,

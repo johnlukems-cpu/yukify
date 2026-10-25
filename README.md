@@ -1,6 +1,6 @@
 # Yukify — website (yukifyadministratie.nl)
 
-Website voor **Yukify — Administratie & Support**. Statische pagina's gegenereerd met Node.js (zonder framework) en een kleine Node-server die de site serveert en het contactformulier via SMTP verstuurt.
+Website voor **Yukify — Administratie & Support**. Statische pagina's gegenereerd met Node.js (zonder framework) en een kleine Node-server die de site serveert en het contactformulier via Resend of SMTP verstuurt.
 
 ## Snel starten
 
@@ -24,25 +24,23 @@ Vereist Node.js 20 of hoger.
 | `src/pages/*.mjs` | Inhoud per pagina, inclusief SEO-titel en meta description |
 | `src/assets/` | CSS (design system) en JavaScript (menu, formulier) |
 | `src/static/` | Favicon, manifest, OG-afbeelding, logo-PNG |
-| `lib/contact.mjs`, `lib/security.mjs` | Formulierverwerking (SMTP) en beveiligingsheaders, gedeeld door beide hostingvarianten |
+| `lib/contact.mjs`, `lib/security.mjs` | Formulierverwerking (Resend/SMTP) en beveiligingsheaders, gedeeld door beide hostingvarianten |
 | `api/contact.mjs`, `api/health.mjs`, `vercel.json` | Serverless functies en configuratie voor Vercel |
 | `serve.mjs` | Webserver voor eigen Node-hosting (serveert `dist/` + `/api/contact`) |
 | `tests/run-tests.mjs` | End-to-end tests |
 
 ## Contactformulier configureren
 
-Het formulier verstuurt e-mail via SMTP (nodemailer) vanuit Google Workspace. Zonder geldige configuratie toont het een foutmelding ("niet verzonden"); er wordt nooit een succes gesimuleerd.
+Het formulier verstuurt e-mail via **Resend** (HTTP-API) of, als alternatief, via **SMTP** (Google Workspace). Resend heeft voorrang zodra `RESEND_API_KEY` is ingesteld. Zonder geldige configuratie toont het formulier een foutmelding ("niet verzonden"); er wordt nooit een succes gesimuleerd. Antwoorden gaan via `Reply-To` naar de bezoeker.
 
 | Variabele | Verplicht | Waarde |
 | --- | --- | --- |
-| `SMTP_HOST` | ja | `smtp.gmail.com` |
-| `SMTP_USER` | ja | `info@yukifyadministratie.nl` |
-| `SMTP_PASS` | ja | app-wachtwoord van dat account (geheim, in Vercel als *Sensitive*) |
-| `SMTP_PORT` / `SMTP_SECURE` | nee | standaard `465` / `true` |
+| `RESEND_API_KEY` | ja (Resend) | API-sleutel uit Resend → API Keys, met *Sending access* voor `yukifyadministratie.nl` (geheim, in Vercel als *Sensitive*) |
+| `MAIL_FROM` | nee | standaard `Yukify website <website@yukifyadministratie.nl>`; moet op het in Resend geverifieerde domein staan |
 | `MAIL_TO` | nee | standaard `info@yukifyadministratie.nl` |
-| `MAIL_FROM` | nee | standaard `Yukify website <SMTP_USER>`; alleen het account zelf of een geverifieerde Gmail-alias |
+| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | alleen zonder Resend | `smtp.gmail.com` / `info@yukifyadministratie.nl` / app-wachtwoord |
 
-Controle: `https://<domein>/healthz` toont `"mail": true` en een lege `missing`-lijst. Lokaal testen van inloggen en verzenden: zet de variabelen in `.env.local` (niet committen) en draai `npm run mail:check` (alleen inloggen) of `node --env-file=.env.local scripts/check-mail.mjs --send` (testbericht).
+Controle: `https://<domein>/healthz` toont `"mail": true`, `"provider": "resend"` en een lege `missing`-lijst. Lokaal testen: zet de variabelen in `.env.local` (niet committen) en draai `node --env-file=.env.local scripts/check-mail.mjs --send` (stuurt een testbericht naar `MAIL_TO`).
 
 ## Hosting
 

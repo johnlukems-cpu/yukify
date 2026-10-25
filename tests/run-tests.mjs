@@ -1,6 +1,7 @@
 // End-to-end tests: pagina's, links, SEO, toegankelijkheid, responsiviteit en het contactformulier.
 // Gebruik: npm test   (bouwt eerst de site)
 import { spawn } from 'node:child_process';
+import http from 'node:http';
 import { mkdir } from 'node:fs/promises';
 import { SMTPServer } from 'smtp-server';
 import { chromium } from 'playwright';
@@ -41,7 +42,26 @@ const smtp = new SMTPServer({
 });
 await new Promise((r) => smtp.listen(2525, '127.0.0.1', r));
 
-const CLEAN_ENV = { SMTP_HOST: '', SMTP_PORT: '', SMTP_SECURE: '', SMTP_USER: '', SMTP_PASS: '', MAIL_FROM: '', MAIL_TO: '', SMTP_REQUIRE_TLS: '' };
+const CLEAN_ENV = { SMTP_HOST: '', SMTP_PORT: '', SMTP_SECURE: '', SMTP_USER: '', SMTP_PASS: '', MAIL_FROM: '', MAIL_TO: '', SMTP_REQUIRE_TLS: '', RESEND_API_KEY: '', RESEND_API_URL: '' };
+
+/* ---------- Nagebootste Resend-API (POST /emails) ---------- */
+const RESEND_KEY = 're_test_0123456789';
+const resendCalls = [];
+const resendApi = http.createServer((req, res) => {
+  let body = '';
+  req.on('data', (c) => (body += c));
+  req.on('end', () => {
+    const json = (status, obj) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
+    if (req.method !== 'POST' || req.url !== '/emails') return json(404, { name: 'not_found' });
+    if (req.headers.authorization !== `Bearer ${RESEND_KEY}`) return json(401, { statusCode: 401, name: 'validation_error', message: 'API key is invalid' });
+    const data = JSON.parse(body);
+    if (!/@yukifyadministratie\.nl>?$/.test(data.from)) return json(403, { statusCode: 403, name: 'validation_error', message: 'domain not verified' });
+    resendCalls.push(data);
+    json(200, { id: `test-${resendCalls.length}` });
+  });
+});
+await new Promise((r) => resendApi.listen(4300, '127.0.0.1', r));
+const RESEND_TEST_ENV = { RESEND_API_URL: 'http://127.0.0.1:4300' };
 const logs = {};
 function startServer(port, extraEnv) {
   const child = spawn(process.execPath, ['serve.mjs'], {
@@ -62,6 +82,8 @@ const live = await startServer(4100, { RATE_LIMIT_MAX: '10', ...SMTP_TEST_ENV, S
 const unconfigured = await startServer(4101, {});
 const partial = await startServer(4102, { SMTP_HOST: 'smtp.gmail.com' });
 const wrongPass = await startServer(4103, { ...SMTP_TEST_ENV, SMTP_PASS: 'fout-wachtwoord-123' });
+const viaResend = await startServer(4104, { ...RESEND_TEST_ENV, RESEND_API_KEY: RESEND_KEY });
+const resendWrongKey = await startServer(4105, { ...RESEND_TEST_ENV, RESEND_API_KEY: 're_verkeerde_sleutel_999' });
 const BASE = 'http://127.0.0.1:4100';
 
 const pages = process.env.ONLY ? JSON.parse(process.env.ONLY) : ['/', '/diensten/', '/administratiekantoren/', '/mkb/', '/over-yukify/', '/veelgestelde-vragen/', '/contact/', '/privacyverklaring/', '/algemene-voorwaarden/', '/contact/bedankt/', '/contact/niet-verzonden/'];
@@ -531,7 +553,7 @@ try {
   /* ---------- E-mailconfiguratie ---------- */
   {
     const h1 = await (await fetch('http://127.0.0.1:4101/healthz')).json();
-    check(h1.mail === false && ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'].every((k) => h1.missing.includes(k)), 'healthz zonder configuratie: mail=false, ontbrekende namen getoond');
+    check(h1.mail === false && h1.provider === 'none' && h1.missing.join() === 'RESEND_API_KEY', `healthz zonder configuratie: mail=false, ontbrekende naam getoond (${h1.missing})`);
     const h2 = await (await fetch('http://127.0.0.1:4102/healthz')).json();
     check(h2.mail === false && h2.missing.join() === 'SMTP_USER,SMTP_PASS', `gedeeltelijke configuratie herkend (${h2.missing})`);
     const rp = await post(form({}), 'application/json', 4102);
@@ -562,7 +584,24 @@ try {
     c = await runCheck([], { ...SMTP_TEST_ENV, SMTP_PASS: 'verkeerd' });
     check(c.code === 1 && c.out.includes('EAUTH') && !c.out.includes('verkeerd'), 'check-mail: fout wachtwoord gemeld zonder het wachtwoord te tonen');
     c = await runCheck([], {});
-    check(c.code === 1 && c.out.includes('SMTP_HOST, SMTP_USER, SMTP_PASS'), 'check-mail: ontbrekende variabelen gemeld');
+    check(c.code === 1 && c.out.includes('RESEND_API_KEY'), 'check-mail: ontbrekende variabelen gemeld');
+
+    /* Resend */
+    const hr = await (await fetch('http://127.0.0.1:4104/healthz')).json();
+    check(hr.mail === true && hr.provider === 'resend' && hr.missing.length === 0 && !JSON.stringify(hr).includes(RESEND_KEY), 'healthz met Resend: mail=true, provider=resend, geen sleutel zichtbaar');
+    const rr = await post(form({ naam: 'Resend Tester', bedrijf: 'Kantoor Resend', email: 'bezoeker@voorbeeld.nl' }), 'application/json', 4104);
+    const rj = await rr.json();
+    const call = resendCalls.at(-1) || {};
+    check(rr.status === 200 && rj.ok === true && resendCalls.length >= 1, 'Resend: formulier verzonden na acceptatie door Resend');
+    check(JSON.stringify(call.to) === '["info@yukifyadministratie.nl"]' && call.from === 'Yukify website <website@yukifyadministratie.nl>' && call.reply_to === 'bezoeker@voorbeeld.nl', `Resend: ontvanger, afzender op eigen domein en Reply-To kloppen (${call.from} / ${call.reply_to})`);
+    check(call.subject.includes('Kantoor Resend') && call.text.includes('Resend Tester') && call.html.includes('Kantoor Resend'), 'Resend: onderwerp en inhoud bevatten de formuliergegevens');
+    const beforeWrong = resendCalls.length;
+    const rw2 = await post(form({ email: 'sleutel@voorbeeld.nl' }), 'application/json', 4105);
+    check(rw2.status === 502 && (await rw2.json()).ok === false && resendCalls.length === beforeWrong, 'Resend met foute sleutel: 502, geen succes');
+    await new Promise((r) => setTimeout(r, 200));
+    check(/RESEND_401.*API-sleutel/.test(logs[4105]) && !logs[4105].includes('re_verkeerde_sleutel_999') && !logs[4104].includes(RESEND_KEY), 'Resend: oorzaak gelogd zonder sleutel');
+    c = await runCheck(['--send'], { ...RESEND_TEST_ENV, RESEND_API_KEY: RESEND_KEY });
+    check(c.code === 0 && c.out.includes('Provider: resend') && c.out.includes('geaccepteerd voor info@yukifyadministratie.nl') && !c.out.includes(RESEND_KEY), 'check-mail --send via Resend: testbericht geaccepteerd');
   }
   // Rate limiting (al meerdere verzoeken gedaan vanaf dit IP)
   let limited = false;
@@ -573,6 +612,9 @@ try {
   live.kill();
   unconfigured.kill();
   partial.kill();
+  viaResend.kill();
+  resendWrongKey.kill();
+  resendApi.close();
   wrongPass.kill();
   smtp.close();
 }

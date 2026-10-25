@@ -7,7 +7,7 @@ import { stat, readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { securityHeaders, send, sendJson } from './lib/security.mjs';
-import { handleContact, smtpConfigured, missingMailSettings } from './lib/contact.mjs';
+import { handleContact, mailConfigured, mailProvider, missingMailSettings } from './lib/contact.mjs';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), 'dist');
 const PORT = Number(process.env.PORT || 3000);
@@ -72,7 +72,7 @@ export const server = http.createServer(async (req, res) => {
       if (req.method !== 'POST') return send(res, 405, 'Method not allowed', { Allow: 'POST' });
       return await handleContact(req, res);
     }
-    if (pathname === '/healthz') return sendJson(res, 200, { ok: true, mail: smtpConfigured, missing: missingMailSettings });
+    if (pathname === '/healthz') return sendJson(res, 200, { ok: true, mail: mailConfigured, provider: mailProvider, missing: missingMailSettings });
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed', { Allow: 'GET, HEAD' });
     return await serveStatic(req, res, pathname);
   } catch (err) {

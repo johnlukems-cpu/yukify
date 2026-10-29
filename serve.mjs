@@ -8,8 +8,12 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { securityHeaders, send, sendJson } from './lib/security.mjs';
 import { handleContact, mailConfigured, mailProvider, missingMailSettings } from './lib/contact.mjs';
+import { handleBeheer } from './lib/admin/handler.mjs';
+import { handleRedactie } from './lib/admin/redactie.mjs';
+import { handleCron } from './lib/admin/cron.mjs';
 
-const root = resolve(fileURLToPath(new URL('.', import.meta.url)), 'dist');
+// DIST_DIR is alleen bedoeld voor tests (bijv. een build met testartikelen).
+const root = resolve(fileURLToPath(new URL('.', import.meta.url)), process.env.DIST_DIR || 'dist');
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
 
@@ -72,6 +76,10 @@ export const server = http.createServer(async (req, res) => {
       if (req.method !== 'POST') return send(res, 405, 'Method not allowed', { Allow: 'POST' });
       return await handleContact(req, res);
     }
+    // Beheer en redactie-API: eigen authenticatie, nooit cachen of indexeren.
+    if (pathname === '/beheer' || pathname.startsWith('/beheer/')) return await handleBeheer(req, res);
+    if (pathname.startsWith('/api/redactie/')) return await handleRedactie(req, res);
+    if (pathname === '/api/cron-publiceren') return await handleCron(req, res);
     if (pathname === '/healthz') return sendJson(res, 200, { ok: true, mail: mailConfigured, provider: mailProvider, missing: missingMailSettings });
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed', { Allow: 'GET, HEAD' });
     return await serveStatic(req, res, pathname);

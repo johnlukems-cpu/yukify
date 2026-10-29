@@ -86,13 +86,13 @@ const viaResend = await startServer(4104, { ...RESEND_TEST_ENV, RESEND_API_KEY: 
 const resendWrongKey = await startServer(4105, { ...RESEND_TEST_ENV, RESEND_API_KEY: 're_verkeerde_sleutel_999' });
 const BASE = 'http://127.0.0.1:4100';
 
-const pages = process.env.ONLY ? JSON.parse(process.env.ONLY) : ['/', '/diensten/', '/administratiekantoren/', '/mkb/', '/over-yukify/', '/veelgestelde-vragen/', '/contact/', '/privacyverklaring/', '/algemene-voorwaarden/', '/contact/bedankt/', '/contact/niet-verzonden/'];
+const pages = process.env.ONLY ? JSON.parse(process.env.ONLY) : ['/', '/diensten/', '/administratiekantoren/', '/mkb/', '/over-yukify/', '/veelgestelde-vragen/', '/nieuws/', '/contact/', '/privacyverklaring/', '/algemene-voorwaarden/', '/contact/bedankt/', '/contact/niet-verzonden/'];
 const viewports = { desktop: { width: 1440, height: 900 }, tablet: { width: 820, height: 1180 }, mobile: { width: 390, height: 844 } };
 // Extra breedtes alleen voor overflowcontrole (geen screenshots)
 const extraWidths = { 'w320': { width: 320, height: 640 }, 'w360': { width: 360, height: 740 }, 'w430': { width: 430, height: 932 }, 'w1024': { width: 1024, height: 768 } };
 const TEL = 'tel:+31614856469';
 const WA = 'https://wa.me/31614856469?text=Hallo%20Yukify%2C%20ik%20wil%20graag%20meer%20informatie%20over%20jullie%20administratieve%20ondersteuning.';
-const NAV_PAGES = ['/', '/diensten/', '/administratiekantoren/', '/mkb/', '/over-yukify/', '/veelgestelde-vragen/', '/contact/'];
+const NAV_PAGES = ['/', '/diensten/', '/administratiekantoren/', '/mkb/', '/over-yukify/', '/veelgestelde-vragen/', '/nieuws/', '/contact/'];
 
 const browser = await chromium.launch();
 await mkdir('test-results/screenshots', { recursive: true });
@@ -163,7 +163,7 @@ try {
 
     // Contactmogelijkheden in footer
     const footer = await page.evaluate(() => [...document.querySelectorAll('.site-footer a')].map((a) => a.getAttribute('href')));
-    check([MAILTO, 'tel:+31614856469', '/privacyverklaring/', '/algemene-voorwaarden/'].every((h) => footer.includes(h)) && footer.some((h) => h.includes('wa.me/31614856469')), `${path}: footer bevat e-mail, telefoon, WhatsApp en juridische links`);
+    check([MAILTO, 'tel:+31614856469', '/privacyverklaring/', '/algemene-voorwaarden/', '/nieuws/'].every((h) => footer.includes(h)) && footer.some((h) => h.includes('wa.me/31614856469')), `${path}: footer bevat e-mail, telefoon, WhatsApp en juridische links`);
     check((await page.textContent('.site-footer')).includes('Paramaribo, Suriname'), `${path}: footer toont locatie`);
     check((await page.textContent('.footer-slogan')).trim() === 'Uw betrouwbare partner voor financiële backoffice', `${path}: footer-slogan`);
 
@@ -240,7 +240,12 @@ try {
     const EXPECTED_NOINDEX = ['/privacyverklaring/', '/algemene-voorwaarden/', '/contact/bedankt/', '/contact/niet-verzonden/', '/404.html'];
     const htmlOf = async (p) => readFile(p === '/404.html' ? 'dist/404.html' : `dist${p}index.html`, 'utf8');
     const attr = (html, re) => [...html.matchAll(re)].map((m) => m[1]);
-    const allPaths = [...new Set([...pages, '/404.html'])];
+    // Lege categoriepagina's van Nieuws & Inzichten zijn bewust noindex (dun, zonder inhoud).
+    const { readdir: rdCat } = await import('node:fs/promises');
+    const emptyCats = [];
+    for (const c of await rdCat('dist/nieuws/categorie')) { const h = await readFile(`dist/nieuws/categorie/${c}/index.html`, 'utf8'); if (/noindex/.test(h)) emptyCats.push(`/nieuws/categorie/${c}/`); }
+    EXPECTED_NOINDEX.push(...emptyCats);
+    const allPaths = [...new Set([...pages, ...emptyCats, '/404.html'])];
     const indexable = [];
     for (const p of allPaths) {
       const html = await htmlOf(p);

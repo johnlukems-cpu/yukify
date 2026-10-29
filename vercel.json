@@ -8,6 +8,24 @@
     {
       "source": "/healthz",
       "destination": "/api/health"
+    },
+    {
+      "source": "/beheer",
+      "destination": "/api/beheer"
+    },
+    {
+      "source": "/beheer/:path*",
+      "destination": "/api/beheer?__p=:path*"
+    },
+    {
+      "source": "/api/redactie/:path*",
+      "destination": "/api/redactie?__p=:path*"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron-publiceren",
+      "schedule": "17 5 * * *"
     }
   ],
   "headers": [

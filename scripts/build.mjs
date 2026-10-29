@@ -14,10 +14,20 @@ import over from '../src/pages/over.mjs';
 import faq from '../src/pages/faq.mjs';
 import contact, { thanksPage, failedPage, notFoundPage } from '../src/pages/contact.mjs';
 import { privacyPage, termsPage } from '../src/pages/legal.mjs';
+import { listingPages, articlePage, searchIndex } from '../src/pages/news.mjs';
+import { loadArticles, publicArticles, plainText, publicationDate, isPublic } from '../lib/news.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const dist = join(root, 'dist');
-const pages = [home, diensten, kantoren, mkb, over, faq, contact, privacyPage, termsPage, thanksPage, failedPage, notFoundPage];
+// BUILD_OUT_DIR, NEWS_CONTENT_DIR en BUILD_NOW zijn alleen voor tests en controles.
+const dist = join(root, process.env.BUILD_OUT_DIR || 'dist');
+const now = process.env.BUILD_NOW ? new Date(process.env.BUILD_NOW) : new Date();
+
+// Nieuws: alleen goedgekeurde en vrijgegeven artikelen worden gebouwd (zie lib/news.mjs → isPublic).
+const allArticles = await loadArticles(join(root, process.env.NEWS_CONTENT_DIR || 'content/nieuws'));
+const pub = publicArticles(allArticles, now);
+const articlePages = pub.map((a) => ({ ...articlePage(a, pub), lastmod: a.updated || publicationDate(a) }));
+
+const pages = [home, diensten, kantoren, mkb, over, faq, ...listingPages(pub), ...articlePages, contact, privacyPage, termsPage, thanksPage, failedPage, notFoundPage];
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(join(dist, 'assets/fonts'), { recursive: true });
@@ -35,6 +45,7 @@ for (const [pkg, file] of [
 const hash = createHash('sha256');
 hash.update(await readFile(join(root, 'src/assets/css/styles.css')));
 hash.update(await readFile(join(root, 'src/assets/js/main.js')));
+hash.update(await readFile(join(root, 'src/assets/js/news.js')));
 const assetVersion = hash.digest('hex').slice(0, 10);
 
 // Pagina's
@@ -52,15 +63,19 @@ for (const page of pages) {
 
 // Sitemap & robots
 const today = new Date().toISOString().slice(0, 10);
-const indexable = pages.filter((p) => !p.noindex);
+const indexable = pages.filter((p) => !p.noindex && p.inSitemap !== false);
 await writeFile(
   join(dist, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${indexable.map((p) => `  <url><loc>${site.url}${p.path}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
+${indexable.map((p) => `  <url><loc>${site.url}${p.path}</loc><lastmod>${p.lastmod || today}</lastmod></url>`).join('\n')}
 </urlset>
 `,
 );
-await writeFile(join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${site.url}/sitemap.xml\n`);
+await writeFile(join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /beheer\n\nSitemap: ${site.url}/sitemap.xml\n`);
 
-console.log(`Build gereed: ${pages.length} pagina's, ${indexable.length} in sitemap (assets v${assetVersion}).`);
+// Zoekindex voor Nieuws & Inzichten (alleen openbare artikelen)
+await writeFile(join(dist, 'nieuws/zoekindex.json'), JSON.stringify(searchIndex(pub, plainText)));
+
+const hidden = allArticles.filter((a) => !isPublic(a, now)).length;
+console.log(`Build gereed: ${pages.length} pagina's, ${indexable.length} in sitemap, ${pub.length} openbare artikelen (${hidden} niet openbaar) (assets v${assetVersion}).`);

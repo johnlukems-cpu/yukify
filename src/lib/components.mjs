@@ -16,6 +16,7 @@ export const routes = {
   mkb: '/mkb/',
   over: '/over-yukify/',
   faq: '/veelgestelde-vragen/',
+  nieuws: '/nieuws/',
   contact: '/contact/',
   privacy: '/privacyverklaring/',
   voorwaarden: '/algemene-voorwaarden/',
@@ -29,6 +30,7 @@ const nav = [
   { href: routes.mkb, label: 'Voor mkb', long: 'Voor mkb-bedrijven' },
   { href: routes.over, label: 'Over Yukify' },
   { href: routes.faq, label: 'Veelgestelde vragen' },
+  { href: routes.nieuws, label: 'Nieuws', long: 'Nieuws & Inzichten' },
   { href: routes.contact, label: 'Contact' },
 ];
 
@@ -100,10 +102,12 @@ export function phoneButton({ variant = 'outline', label = 'Bel Yukify' } = {}) 
 
 /* ---------- Header & footer ---------- */
 function header(currentPath) {
+  // Onderliggende pagina's van Nieuws (artikelen, categorieën) markeren het menu-item ook als actief.
+  const isCurrent = (href) => currentPath === href || (href === routes.nieuws && currentPath.startsWith(routes.nieuws));
   const links = nav
     .map(
       (n) =>
-        `<li${n.mobileOnly ? ' class="nav-mobile-only"' : ''}><a href="${n.href}"${currentPath === n.href ? ' aria-current="page"' : ''}>${
+        `<li${n.mobileOnly ? ' class="nav-mobile-only"' : ''}><a href="${n.href}"${isCurrent(n.href) ? ' aria-current="page"' : ''}>${
           n.long ? `<span class="nav-label-short">${n.label}</span><span class="nav-label-long">${n.long}</span>` : n.label
         }</a></li>`,
     )
@@ -160,6 +164,7 @@ function footer() {
           <li><a href="${routes.mkb}">Voor mkb-bedrijven</a></li>
           <li><a href="${routes.over}">Over Yukify</a></li>
           <li><a href="${routes.faq}">Veelgestelde vragen</a></li>
+          <li><a href="${routes.nieuws}">Nieuws &amp; Inzichten</a></li>
           <li><a href="${routes.contact}">Contact</a></li>
         </ul>
       </nav>
@@ -237,7 +242,7 @@ export function websiteJsonLd() {
 export function layout(page, body) {
   const canonical = `${site.url}${page.path}`;
   const title = page.title;
-  const ogImage = `${site.url}/assets/img/og-yukify.png`;
+  const ogImage = `${site.url}${page.ogImage || '/assets/img/og-yukify.png'}`;
   const crumbs = page.breadcrumbs
     ? {
         '@context': 'https://schema.org',
@@ -253,7 +258,7 @@ export function layout(page, body) {
   const jsonLd = [...(page.path === '/' ? [organizationJsonLd(), websiteJsonLd()] : []), crumbs, ...(page.jsonLd || [])].filter(Boolean);
   const ogTitle = page.ogTitle || title;
   const ogDescription = page.ogDescription || page.description;
-  const ogImageAlt = 'Yukify — Administratie & Support. Meer capaciteit. Minder administratieve druk.';
+  const ogImageAlt = page.ogImageAlt || 'Yukify — Administratie & Support. Meer capaciteit. Minder administratieve druk.';
 
   return `<!doctype html>
 <html lang="nl">
@@ -279,7 +284,7 @@ ${page.noindex ? '<meta name="robots" content="noindex, follow">' : `<meta name=
 <meta name="twitter:title" content="${esc(ogTitle)}">
 <meta name="twitter:description" content="${esc(ogDescription)}">
 <meta name="twitter:image" content="${ogImage}">
-<meta name="twitter:image:alt" content="${esc(ogImageAlt)}">
+<meta name="twitter:image:alt" content="${esc(ogImageAlt)}">${page.extraHead ? '\n' + page.extraHead : ''}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -289,7 +294,7 @@ ${page.noindex ? '<meta name="robots" content="noindex, follow">' : `<meta name=
 <link rel="stylesheet" href="/assets/css/styles.css?v=${page.assetVersion}">
 ${jsonLd.map((d) => `<script type="application/ld+json">${JSON.stringify(d).replace(/</g, '\\u003c')}</script>`).join('\n')}
 <script>document.documentElement.classList.add('js')</script>
-<script src="/assets/js/main.js?v=${page.assetVersion}" defer></script>
+<script src="/assets/js/main.js?v=${page.assetVersion}" defer></script>${(page.scripts || []).map((src) => `\n<script src="${src}?v=${page.assetVersion}" defer></script>`).join('')}
 </head>
 <body>
 <a class="skip-link" href="#main">Direct naar de inhoud</a>

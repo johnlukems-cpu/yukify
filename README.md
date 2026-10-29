@@ -27,7 +27,10 @@ Vereist Node.js 20 of hoger.
 | `lib/contact.mjs`, `lib/security.mjs` | Formulierverwerking (Resend/SMTP) en beveiligingsheaders, gedeeld door beide hostingvarianten |
 | `api/contact.mjs`, `api/health.mjs`, `vercel.json` | Serverless functies en configuratie voor Vercel |
 | `serve.mjs` | Webserver voor eigen Node-hosting (serveert `dist/` + `/api/contact`) |
-| `tests/run-tests.mjs` | End-to-end tests |
+| `content/nieuws/*.md`, `content/social/*.json` | Artikelen (Markdown + frontmatter) en socialmediaberichten van Nieuws & Inzichten |
+| `lib/news.mjs`, `src/pages/news.mjs` | Statusregels (wat openbaar mag), Markdown-rendering, overzicht/categorie/artikelpagina's |
+| `lib/admin/`, `api/beheer.mjs`, `api/redactie.mjs`, `api/cron-publiceren.mjs` | Beveiligd beheer (`/beheer`), redactie-API en dagelijkse publicatieronde — zie [`docs/redactie-workflow.md`](docs/redactie-workflow.md) |
+| `tests/run-tests.mjs`, `tests/news-tests.mjs` | End-to-end tests (site en Nieuws & Inzichten/beheer) |
 
 ## Contactformulier configureren
 
@@ -41,6 +44,10 @@ Het formulier verstuurt e-mail via **Resend** (HTTP-API) of, als alternatief, vi
 | `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | alleen zonder Resend | `smtp.gmail.com` / `info@yukifyadministratie.nl` / app-wachtwoord |
 
 Controle: `https://<domein>/healthz` toont `"mail": true`, `"provider": "resend"` en een lege `missing`-lijst. Lokaal testen: zet de variabelen in `.env.local` (niet committen) en draai `node --env-file=.env.local scripts/check-mail.mjs --send` (stuurt een testbericht naar `MAIL_TO`).
+
+## Nieuws & Inzichten
+
+Artikelen staan in `content/nieuws/` en verschijnen **alleen** op de website als ze in `/beheer` door de eigenaar zijn goedgekeurd én gepubliceerd (of ingepland en het moment is verstreken). Concepten komen nooit in `dist/`, de sitemap of de zoekindex. Het beheer, de redactie-API voor Claude en de socialmediaworkflow zijn beschreven in [`docs/redactie-workflow.md`](docs/redactie-workflow.md), inclusief de omgevingsvariabelen die nog moeten worden ingesteld.
 
 ## Hosting
 

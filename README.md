@@ -36,7 +36,7 @@ Het formulier verstuurt e-mail via **Resend** (HTTP-API) of, als alternatief, vi
 | Variabele | Verplicht | Waarde |
 | --- | --- | --- |
 | `RESEND_API_KEY` | ja (Resend) | API-sleutel uit Resend → API Keys, met *Sending access* voor `yukifyadministratie.nl` (geheim, in Vercel als *Sensitive*) |
-| `MAIL_FROM` | nee | standaard `Yukify website <website@yukifyadministratie.nl>`; moet op het in Resend geverifieerde domein staan |
+| `MAIL_FROM` | nee | standaard `Yukify Website <contact@yukifyadministratie.nl>`; moet op het in Resend geverifieerde domein staan |
 | `MAIL_TO` | nee | standaard `info@yukifyadministratie.nl` |
 | `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | alleen zonder Resend | `smtp.gmail.com` / `info@yukifyadministratie.nl` / app-wachtwoord |
 
@@ -65,7 +65,7 @@ Voor het contactformulier: zie *Contactformulier configureren* hierboven.
 Zie de schakelaars in `site.config.mjs`:
 
 - `social.linkedin` / `social.instagram` — vul de volledige https-URL van het officiële profiel in; de knoppen verschijnen dan automatisch in de footer en het mobiele menu. Ongeldige of lege URL's worden niet getoond.
-- `pricing.confirmed` — tarief "vanaf € 15 per uur".
+- `pricing.confirmed` / `pricing.hourlyFrom` — tarief (nu bevestigd: vanaf € 12 per uur).
 - `offersProcessImprovement` — dienst 5 (procesverbetering en automatisering).
 - `founder` — persoonlijke introductie en foto.
 - `legal.*` en `legal.final` — juridische naam, adres, inschrijvingsnummer, en controle van privacyverklaring en algemene voorwaarden (tot dan `noindex` met conceptmelding).

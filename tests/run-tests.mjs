@@ -591,15 +591,24 @@ try {
     /* Resend */
     const hr = await (await fetch('http://127.0.0.1:4104/healthz')).json();
     check(hr.mail === true && hr.provider === 'resend' && hr.missing.length === 0 && !JSON.stringify(hr).includes(RESEND_KEY), 'healthz met Resend: mail=true, provider=resend, geen sleutel zichtbaar');
-    const rr = await post(form({ naam: 'Resend Tester', bedrijf: 'Kantoor Resend', email: 'bezoeker@voorbeeld.nl' }), 'application/json', 4104);
+    // Extra velden (to/cc/bcc/from) mogen geen invloed hebben op ontvanger of afzender.
+    const rr = await post(form({ naam: 'Resend Tester', bedrijf: 'Kantoor Resend', email: 'bezoeker@voorbeeld.nl', to: 'aanvaller@voorbeeld.nl', cc: 'x@voorbeeld.nl', bcc: 'y@voorbeeld.nl', from: 'nep@voorbeeld.nl' }), 'application/json', 4104);
     const rj = await rr.json();
     const call = resendCalls.at(-1) || {};
     check(rr.status === 200 && rj.ok === true && resendCalls.length >= 1, 'Resend: formulier verzonden na acceptatie door Resend');
-    check(JSON.stringify(call.to) === '["info@yukifyadministratie.nl"]' && call.from === 'Yukify website <website@yukifyadministratie.nl>' && call.reply_to === 'bezoeker@voorbeeld.nl', `Resend: ontvanger, afzender op eigen domein en Reply-To kloppen (${call.from} / ${call.reply_to})`);
+    check(JSON.stringify(call.to) === '["info@yukifyadministratie.nl"]' && call.from === 'Yukify Website <contact@yukifyadministratie.nl>' && call.reply_to === 'bezoeker@voorbeeld.nl', `Resend: ontvanger, afzender op eigen domein en Reply-To kloppen (${call.from} / ${call.reply_to})`);
+    check(!('cc' in call) && !('bcc' in call) && !JSON.stringify(call).includes('aanvaller@'), 'Resend: bezoeker kan geen extra ontvangers of afzender opgeven');
     check(call.subject.includes('Kantoor Resend') && call.text.includes('Resend Tester') && call.html.includes('Kantoor Resend'), 'Resend: onderwerp en inhoud bevatten de formuliergegevens');
     const beforeWrong = resendCalls.length;
     const rw2 = await post(form({ email: 'sleutel@voorbeeld.nl' }), 'application/json', 4105);
-    check(rw2.status === 502 && (await rw2.json()).ok === false && resendCalls.length === beforeWrong, 'Resend met foute sleutel: 502, geen succes');
+    const rw2j = await rw2.json();
+    check(rw2.status === 502 && rw2j.ok === false && resendCalls.length === beforeWrong, 'Resend met foute sleutel: 502, geen succes');
+    check(!/resend|RESEND|401|api|sleutel|re_/i.test(JSON.stringify(rw2j)), `bezoeker ziet geen technische details (${rw2j.message})`);
+    const { readdir: rd } = await import('node:fs/promises');
+    const distFiles = (await rd('dist', { recursive: true })).filter((f) => /\.(html|js|css|json|xml|txt|webmanifest)$/.test(f));
+    let leaks = [];
+    for (const f of distFiles) { const t = await readFile(`dist/${f}`, 'utf8'); if (/RESEND_API_KEY|re_[A-Za-z0-9]{8,}|api\.resend\.com/.test(t)) leaks.push(f); }
+    check(leaks.length === 0, `geen API-sleutel of Resend-aanroep in clientcode${leaks.length ? ' — ' + leaks.join(', ') : ''}`);
     await new Promise((r) => setTimeout(r, 200));
     check(/RESEND_401.*API-sleutel/.test(logs[4105]) && !logs[4105].includes('re_verkeerde_sleutel_999') && !logs[4104].includes(RESEND_KEY), 'Resend: oorzaak gelogd zonder sleutel');
     c = await runCheck(['--send'], { ...RESEND_TEST_ENV, RESEND_API_KEY: RESEND_KEY });

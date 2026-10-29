@@ -165,6 +165,7 @@ try {
     const footer = await page.evaluate(() => [...document.querySelectorAll('.site-footer a')].map((a) => a.getAttribute('href')));
     check([MAILTO, 'tel:+31614856469', '/privacyverklaring/', '/algemene-voorwaarden/'].every((h) => footer.includes(h)) && footer.some((h) => h.includes('wa.me/31614856469')), `${path}: footer bevat e-mail, telefoon, WhatsApp en juridische links`);
     check((await page.textContent('.site-footer')).includes('Paramaribo, Suriname'), `${path}: footer toont locatie`);
+    check((await page.textContent('.footer-slogan')).trim() === 'Uw betrouwbare partner voor financiële backoffice', `${path}: footer-slogan`);
 
     // Responsiviteit
     for (const [name, vp] of Object.entries(extraWidths)) {

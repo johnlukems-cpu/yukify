@@ -1,80 +1,119 @@
 # Nieuws & Inzichten: redactie- en publicatieworkflow
 
-Dit document beschrijft hoe artikelen en socialmediaberichten van concept tot publicatie gaan, wie wat mag en wat er nog moet worden ingericht.
+Sinds 29 oktober 2026 werkt de redactie **automatisch**, op verzoek van de eigenaar. Artikelen worden zonder handmatige goedkeuring gepubliceerd als ze alle automatische kwaliteitscontroles doorstaan. Bij twijfel blijft een artikel concept, met een lijst van wat ontbreekt. De eigenaar kan alles in `/beheer` aanpassen of offline halen, of de automatische modus uitzetten.
 
-## Uitgangspunten
+## Onderdelen
 
-- **Niets wordt openbaar zonder expliciete goedkeuring van de eigenaar.** Een artikel staat alleen op de website als het in `/beheer` is goedgekeurd (naam + tijdstip vastgelegd) én de status *Gepubliceerd* heeft, of *Ingepland* is en het publicatiemoment is verstreken. Deze regel staat op één plek: `isPublic()` in `lib/news.mjs`.
-- Concepten worden niet gebouwd: ze komen niet in `dist/`, niet in de sitemap en niet in de zoekindex. Een conceptadres geeft een 404.
-- Er wordt **niets automatisch op sociale media geplaatst**. Berichten worden voorbereid en door de eigenaar goedgekeurd. Plaatsen gebeurt handmatig of via een integratie die u zelf koppelt en autoriseert.
-- Geheimen staan alleen in server-side omgevingsvariabelen (Vercel). Er staat niets geheims in de frontend of in Git.
+| Onderdeel | Waar |
+| --- | --- |
+| Instellingen (aan/uit, einddatum, betrouwbare brondomeinen) | `content/redactie.json` |
+| Kwaliteitscontrole en automatische taal- en opmaakcorrecties | `lib/quality.mjs` |
+| Publiceren, inplannen, socialmedia klaarzetten en weekrapport | `scripts/redactie.mjs` |
+| Werkinstructies voor de geplande redactiesessies | `docs/redactie-playbook.md` |
+| Weekrapporten | `rapportages/<JJJJ-Www>.md` |
+| Artikelen en socialmediaberichten | `content/nieuws/*.md`, `content/social/*.json` |
+| Handmatig beheer en toezicht | `/beheer` (zie hieronder) |
+
+## Automatische werkwijze
+
+1. **Onderzoek**: actuele ontwikkelingen in Nederlandse accountancy en financiële administratie.
+2. **Bronnen controleren**: primaire, officiële bronnen, met de datum waarop elke bron is geraadpleegd.
+3. **Schrijven**, met een factcheck per kernclaim.
+4. **Corrigeren**: taal- en opmaakfouten worden automatisch gecorrigeerd (`autofix`).
+5. **Publiceren** zodra alle controles slagen (`node scripts/redactie.mjs publiceer`). Na de commit naar `main` bouwt Vercel de site. De build controleert automatisch gepubliceerde artikelen nog een keer; faalt die controle, dan blijft de vorige versie van de site online.
+6. **Socialmedia**: teksten voor LinkedIn, Instagram en Facebook worden gecontroleerd en klaargezet. Plaatsen gebeurt **alleen via een gekoppelde, geautoriseerde integratie**. Die is er nog niet, dus er wordt nu niets geplaatst en niets als geplaatst gemarkeerd.
+7. **Controle**: de Vercel-status van elke commit wordt nagekeken en fouten komen in het weekrapport.
+8. **Rapportage** elke week.
+
+### Kwaliteitsregels
+
+Een artikel wordt alleen automatisch gepubliceerd als het aan alles hieronder voldoet. Anders blijft het concept.
+
+- **Volledig:** alle velden zijn ingevuld en geldig (titel, slug, categorie, description, intro, tekst). Het artikel heeft minimaal drie tussenkoppen, een `## Conclusie` en als laatste `## Bronnen`.
+- **Geen open punten:** `reviewNotes` is leeg. Wat onzeker is, staat daar en blokkeert publicatie.
+- **Factcheck aanwezig**, met per kernclaim de bevestigende bron.
+- **Bronnen:**
+  - minimaal twee, allemaal via https en van een domein op de lijst in `content/redactie.json`;
+  - minimaal één primaire of officiële bron;
+  - elke bron heeft "Geraadpleegd op <datum>", niet ouder dan 30 dagen bij publicatie.
+- **Cijfers en bedragen** hebben een bronlink in dezelfde alinea.
+- **Toekomstige data** hebben altijd een status: geldend, aangenomen of vastgesteld, voorstel of plan, of verwachting.
+- **Geen gevoelige gegevens:** geen e-mailadressen (behalve info@), telefoonnummers, IBAN's of BSN-achtige nummers.
+- **Geen ongeoorloofde inhoud:** geen placeholders, geen garantieclaims.
+- **Fiscale onderwerpen** vermelden dat het algemene informatie is en geen persoonlijk advies.
+- **Doelgroep:** Nederlandstalig.
+- **Geen dubbele publicatie:** geen gelijke titel of description en geen sterk overlappend onderwerp met een bestaand artikel. Een artikel dat al gepubliceerd of ingepland is, wordt nooit opnieuw gepubliceerd.
+
+## Planning
+
+De geplande redactiesessies lopen tot en met **31 december 2026**:
+
+| Wanneer (Nederlandse tijd) | Wat |
+| --- | --- |
+| Dinsdag en donderdag, 07:47 | Onderzoek, schrijven, controleren en publiceren van één hoofdartikel, plus socialmediaberichten |
+| Maandag, 08:37 | Weekrapport en onderhoud |
+
+Na 31 december 2026 publiceert het script niets meer (`autopublishUntil`). Verlengen kan door die datum aan te passen en de geplande taken te verlengen.
+
+## Automatische modus uitzetten
+
+- **Direct stoppen:** zet `"autopublish": false` in `content/redactie.json` en commit. Daarna publiceert het script niets meer.
+- **Eén artikel offline halen:** in `/beheer` → artikel → *Offline halen*, of zet de status in het bestand op `concept`.
+- **De geplande sessies stoppen:** in claude.ai onder *Scheduled tasks*.
 
 ## Statussen
 
 | Status | Betekenis | Op website? |
 | --- | --- | --- |
-| Concept | In bewerking (door de eigenaar of de redactie-API) | Nee |
-| Ter goedkeuring | Klaar voor controle door de eigenaar | Nee |
-| Goedgekeurd | Eigenaar heeft de inhoud goedgekeurd; nog niet vrijgegeven | Nee |
-| Ingepland | Goedgekeurd, met een publicatiemoment | Ja, vanaf dat moment (zie *Inplannen*) |
-| Gepubliceerd | Goedgekeurd en vrijgegeven | Ja |
+| Concept | In bewerking, of niet door de automatische controle (zie `reviewNotes`) | Nee |
+| Ter goedkeuring | Klaar voor handmatige controle (optioneel) | Nee |
+| Goedgekeurd | Goedgekeurd, nog niet vrijgegeven | Nee |
+| Ingepland | Goedgekeurd, met publicatiemoment | Ja, vanaf dat moment |
+| Gepubliceerd | Vrijgegeven | Ja |
 
-Toegestane overgangen (alleen in `/beheer`):
-
-- *Ter goedkeuring aanbieden*: concept → ter goedkeuring.
-- *Goedkeuren*: concept of ter goedkeuring → goedgekeurd. U moet daarbij bevestigen dat u inhoud, feiten en bronnen hebt gecontroleerd. Het artikel moet compleet en geldig zijn.
-- *Nu publiceren* of *Inplannen*: alleen vanuit goedgekeurd of ingepland.
-- *Terug naar concept / Offline halen*: wist de goedkeuring en haalt het artikel van de website.
-
-Wijzigt u in `/beheer` de tekst van een goedgekeurd of gepubliceerd artikel, dan geldt het opslaan als nieuwe goedkeuring door u. Bij een gepubliceerd artikel wordt dan ook de datum *bijgewerkt* gezet.
-
-## Werkwijze per artikel
-
-1. **Onderzoek en concept met bronnen**: door Claude via de redactie-API, of door uzelf via *Nieuw artikel*. Gebruik alleen controleerbare bronnen en verzin geen cijfers of citaten. Maak in de tekst onderscheid tussen geldende regels en plannen of verwachtingen. Wat u nog moet nalopen, staat in *Redactie-aantekeningen*; die zijn alleen in het beheer zichtbaar.
-2. **Goedkeuring door de eigenaar**: in `/beheer` → artikel → *Voorbeeld bekijken*, de aantekeningen nalopen en dan *Goedkeuren*.
-3. **Publicatie op de website**: *Nu publiceren* of *Inplannen*. Elke wijziging is een commit in GitHub; Vercel bouwt de site daarna automatisch opnieuw, wat enkele minuten duurt.
-4. **Socialmediaversies**: per artikel een tekst voor LinkedIn, Instagram en Facebook. Claude kan concepten aanleveren via de API, of u schrijft ze zelf in `/beheer`.
-5. **Goedkeuring van de socialmediaberichten** door de eigenaar in `/beheer`. Dat kan pas nadat het artikel zelf is goedgekeurd. Wijzigt u daarna de tekst, dan moet het bericht opnieuw worden goedgekeurd.
-6. **Plaatsen** gebeurt alleen via een geautoriseerde integratie of handmatig. Daarna legt u de link van het geplaatste bericht vast met *Markeren als geplaatst*, of de integratie meldt het via de API.
-7. **Koppeling**: per artikel staat in `content/social/<slug>.json` de tekst, de status, wie het bericht heeft goedgekeurd en wanneer, en de link van elk geplaatst bericht.
-
-## Inplannen
-
-Een artikel met de status *Ingepland* wordt opgenomen bij de eerste build na het publicatiemoment. Vercel Cron draait dagelijks om 05:17 UTC (06:17 of 07:17 Nederlandse tijd) en zet artikelen waarvan het moment is verstreken op *Gepubliceerd*. Die commit start een nieuwe build. Op het Vercel Hobby-abonnement draait een cron maximaal één keer per dag. Het publicatiemoment werkt dus per dag, niet per minuut. Kies *Nu publiceren* als het direct moet.
+`approvedBy` laat zien wie goedkeurde: "Automatische redactie Yukify" of de naam van de eigenaar. Een artikel kan alleen openbaar worden mét een vastgelegde goedkeuring (`isPublic()` in `lib/news.mjs`).
 
 ## Beheer (`/beheer`)
 
-- Inloggen met wachtwoord. De server bewaart alleen een scrypt-hash.
-- Na het inloggen krijgt u een ondertekende sessiecookie (`HttpOnly`, `Secure`, `SameSite=Strict`, alleen geldig onder `/beheer`, 8 uur). Elke wijziging vereist een CSRF-token en een verzoek vanaf dezelfde origin. Na 10 mislukte inlogpogingen per kwartier wordt het IP-adres tijdelijk geblokkeerd.
-- De pagina's worden nooit gecachet of geïndexeerd (`X-Robots-Tag: noindex`, `Disallow: /beheer` in robots.txt) en staan niet in de navigatie of de sitemap.
-- Zonder volledige configuratie toont `/beheer` alleen welke variabelen nog ontbreken; de waarden worden nooit getoond.
+Toezicht en handmatige ingrepen: artikelen bekijken, bewerken, zelf goedkeuren, inplannen en offline halen, en socialmediaberichten beheren.
 
-## Redactie-API (voor Claude of andere automatisering)
+- **Toegang:** wachtwoord (de server bewaart alleen een scrypt-hash), een ondertekende sessiecookie (`HttpOnly`, `Secure`, `SameSite=Strict`, 8 uur) en een CSRF-token. Er geldt een inlogbeperking.
+- **Afscherming:** de pagina's staan in `noindex` en zijn uitgesloten in robots.txt.
+- **Opslag:** wijzigingen worden commits via de GitHub-API (`GITHUB_TOKEN`).
+- **Zonder configuratie** toont `/beheer` alleen welke variabelen ontbreken.
 
-Alle verzoeken gebruiken `Authorization: Bearer <REDACTIE_TOKEN>`. De API kan **niet** goedkeuren, inplannen of publiceren.
+## Redactie-API
+
+Bedoeld voor externe automatisering, zoals een socialmediatool. Elk verzoek stuurt de header `Authorization: Bearer <REDACTIE_TOKEN>` mee. Via de API kan niets worden gepubliceerd.
 
 | Methode en pad | Doel |
 | --- | --- |
-| `GET /api/redactie/artikelen` | Lijst van alle artikelen (slug, titel, status) |
-| `GET /api/redactie/artikelen?slug=…` | Eén artikel, inclusief tekst |
-| `POST /api/redactie/artikelen` | Concept aanmaken of bijwerken (JSON: `title`, `category`, `description`, `intro`, `body`, `reviewNotes`, optioneel `slug`, `status: "ter-goedkeuring"`). Alleen voor artikelen met de status concept of ter goedkeuring. Velden voor goedkeuring en datum worden geweigerd. |
-| `GET /api/redactie/social?slug=…` | Socialmediaberichten van een artikel |
-| `POST /api/redactie/social` | Concepttekst voor één platform (`slug`, `platform`, `text`). Alleen zolang het bericht nog een concept is. |
-| `GET /api/redactie/social` | Wachtrij: alleen door de eigenaar **goedgekeurde**, nog niet geplaatste berichten |
-| `POST /api/redactie/social/gepubliceerd` | Link vastleggen nadat een geautoriseerde integratie een goedgekeurd bericht heeft geplaatst (`slug`, `platform`, `url`) |
+| `GET /api/redactie/artikelen[?slug=…]` | Artikelen opvragen |
+| `POST /api/redactie/artikelen` | Concept aanmaken of bijwerken (alleen concept of ter goedkeuring) |
+| `GET /api/redactie/social[?slug=…]` | Wachtrij met klaargezette (goedgekeurde) berichten, of de berichten van één artikel |
+| `POST /api/redactie/social` | Concepttekst per platform |
+| `POST /api/redactie/social/gepubliceerd` | Link vastleggen nadat een geautoriseerde integratie een bericht heeft geplaatst |
 
-Categorieën: `financiele-administratie`, `btw-en-belastingen`, `accountancy-en-regelgeving`, `ai-en-automatisering`, `boekhoudsoftware`, `ondernemen-en-cashflow`, `jaarafsluiting`.
+## Vercel-instellingen (eenmalig, door de eigenaar)
 
-Artikeltekst is Markdown: `##` en `###` voor tussenkoppen, `- [ ]` voor checklistpunten, tabellen en links (alleen https of interne links). Ruwe HTML en afbeeldingen in de tekst worden niet doorgelaten. Een H1 (`#`) is niet toegestaan, want de titel is al de H1.
+De sessie heeft geen toegang tot Vercel. Zet daarom zelf in Vercel → *Settings → Environment Variables* de volgende waarden, als **Sensitive** voor Production, en deploy daarna opnieuw (*Deployments → Redeploy*).
 
-## Nog in te richten (eenmalig)
+| Variabele | Waarde |
+| --- | --- |
+| `ADMIN_PASSWORD_HASH` | scrypt-hash van het beheerwachtwoord (`npm run beheer:wachtwoord`) |
+| `ADMIN_SESSION_SECRET` | minimaal 32 willekeurige tekens |
+| `GITHUB_TOKEN` | fine-grained token: alleen repo `johnlukems-cpu/yukify`, *Contents: Read and write*, met vervaldatum |
+| `GITHUB_REPO` | `johnlukems-cpu/yukify` |
+| `GITHUB_BRANCH` | `main` |
+| `CRON_SECRET` | minimaal 32 willekeurige tekens (voor de dagelijkse publicatie van ingeplande artikelen) |
+| `REDACTIE_TOKEN` | minimaal 32 willekeurige tekens (alleen nodig voor externe integraties) |
+| `ADMIN_NAME` | optioneel: naam bij handmatige goedkeuringen |
 
-1. **GitHub-token**: GitHub → Settings → Developer settings → *Fine-grained tokens*. Kies alleen de repository `johnlukems-cpu/yukify`, met de permissie *Contents: Read and write* en een vervaldatum. Zet het token als `GITHUB_TOKEN` in Vercel.
-2. **Wachtwoord**: draai lokaal `npm run beheer:wachtwoord`. Zet de uitvoer als `ADMIN_PASSWORD_HASH` en `ADMIN_SESSION_SECRET` in Vercel. Optioneel: `ADMIN_NAME` met uw naam, die bij goedkeuringen wordt vastgelegd.
-3. **`GITHUB_REPO`** = `johnlukems-cpu/yukify`. Optioneel `GITHUB_BRANCH`; standaard is dat `main`.
-4. **`CRON_SECRET`** (minimaal 32 willekeurige tekens) voor de dagelijkse publicatieronde. Vercel stuurt dit automatisch mee aan de cron.
-5. **`REDACTIE_TOKEN`** (minimaal 32 willekeurige tekens), alleen als Claude of andere automatisering concepten mag aanleveren. Geef dit token alleen aan die integratie.
-6. Zet alle variabelen in Vercel → *Settings → Environment Variables* als **Sensitive**, voor Production (en eventueel Preview), en deploy opnieuw.
-7. **Socialmedia-integraties**: nog niet gekoppeld. Als u dat wilt, verbindt u een plannings- of publicatietool (bijvoorbeeld via de officiële API's van LinkedIn of Meta) met uw eigen accounts. Laat die tool alleen berichten uit de wachtrij `GET /api/redactie/social` plaatsen en daarna `POST /api/redactie/social/gepubliceerd` aanroepen. Inloggegevens van sociale media horen in die tool, niet in deze website.
+De automatische redactie werkt via Git-commits en heeft deze variabelen **niet** nodig. Ze zijn alleen nodig voor `/beheer`, de dagelijkse cron en de redactie-API.
 
-Controle: of de publicatieronde goed draait, ziet u in Vercel → *Cron Jobs* → *Logs*.
+## Nog af te handelen (externe autorisatie)
+
+1. **Vercel-variabelen** instellen (zie hierboven), inclusief het aanmaken van het GitHub-token.
+2. **Netwerktoegang** van de cloudomgeving: de redactiesessies kunnen bronsites (belastingdienst.nl, rijksoverheid.nl, overheid.nl, kvk.nl, europa.eu e.d.) en de eigen site nu niet rechtstreeks openen; ze werken met zoekresultaten. Daardoor blijven claims die alleen op die sites te bevestigen zijn concept. Voeg deze domeinen toe onder *Network access → Allowed domains* van de omgeving: https://code.claude.com/docs/en/cloud-environments#network-access
+3. **Socialmedia-integratie**: koppel een geautoriseerde tool of API aan uw eigen LinkedIn-, Instagram- en Facebook-accounts, bijvoorbeeld een planningstool met officiële API-koppeling. Laat die tool de wachtrij `GET /api/redactie/social` lezen en na het plaatsen `POST /api/redactie/social/gepubliceerd` aanroepen. Tot die koppeling er is, wordt er niets geplaatst.
+4. **Statistieken**: er is nog geen analytics-koppeling, zoals Vercel Web Analytics of Search Console. Het rapport vermeldt dat eerlijk.

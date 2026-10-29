@@ -4,13 +4,16 @@ slug: "financiele-administratie-op-orde-7-controles"
 category: "financiele-administratie"
 description: "Zeven praktische controles waarmee u uw financiële administratie actueel en betrouwbaar houdt, van bankaansluiting tot bewaarplicht."
 intro: "Een administratie die elke maand klopt, voorkomt stress bij de btw-aangifte en de jaarafsluiting. Met deze zeven vaste controles houdt u grip op uw cijfers en ziet u fouten op tijd."
-status: "concept"
-author: "Yukify Administratie & Support"
+status: "gepubliceerd"
+date: "2026-10-29"
+approvedBy: "Automatische redactie Yukify"
+approvedAt: "2026-10-29T12:18:27.922Z"
 imageAlt: "Illustratie van een geordende financiële administratie met afgevinkte controles"
-reviewNotes: |
-  Controleer vóór goedkeuring:
-  - De bewaarplicht van 7 jaar op de genoemde Belastingdienst-pagina (actuele formulering).
-  - De voorgestelde frequenties zijn adviezen, geen wettelijke eisen; pas aan als u een andere werkwijze hanteert.
+author: "Yukify Administratie & Support"
+factcheck: |
+  Bewaarplicht basisgegevens 7 jaar, gegevens over onroerende zaken 10 jaar: bevestigd via Ondernemersplein (overheid.nl), administratie bijhouden en bewaren, 29 oktober 2026.
+  Administratieplicht voor ondernemers met het oog op belastingaangiften: bevestigd via Belastingdienst, Een administratie opzetten, 29 oktober 2026.
+  Frequenties in de checklist zijn praktijkadvies en als zodanig benoemd; geen wettelijke claim.
 ---
 
 Een betrouwbare administratie ontstaat niet aan het einde van het jaar, maar door kleine, vaste controles tussendoor. Wie maandelijks controleert, hoeft bij de btw-aangifte of de jaarafsluiting niet terug te zoeken naar ontbrekende bonnen of onverklaarbare verschillen. Hieronder vindt u zeven controles die wij in de praktijk als basis aanraden.
@@ -41,7 +44,7 @@ Kruisposten, vraagposten en andere tussenrekeningen zijn bedoeld als tijdelijke 
 
 ## 7. Borg uw archief en de bewaarplicht
 
-Ondernemers zijn wettelijk verplicht hun administratie te bewaren; de basistermijn is 7 jaar, en in sommige gevallen geldt een langere termijn. Zorg dat bewijsstukken digitaal goed terug te vinden zijn, dat er een back-up is en dat alleen de juiste personen toegang hebben.
+Ondernemers zijn wettelijk verplicht hun administratie te bewaren. Voor de basisgegevens geldt een termijn van 7 jaar; voor gegevens over onroerende zaken, zoals een bedrijfspand, geldt 10 jaar ([Ondernemersplein](https://ondernemersplein.overheid.nl/administratie-bijhouden-en-bewaren/)). Zorg dat bewijsstukken digitaal goed terug te vinden zijn, dat er een back-up is en dat alleen de juiste personen toegang hebben.
 
 ## Praktische checklist
 
@@ -59,8 +62,9 @@ De frequenties zijn een advies vanuit de praktijk, geen wettelijke verplichting.
 
 ## Conclusie
 
-Een administratie op orde is vooral een kwestie van regelmaat. Met deze zeven controles signaleert u fouten vroeg, verloopt de btw-aangifte soepeler en begint u de jaarafsluiting met betrouwbare cijfers.
+Een administratie op orde is vooral een kwestie van regelmaat. Met deze zeven controles signaleert u fouten vroeg, verloopt de btw-aangifte soepeler en begint u de jaarafsluiting met betrouwbare cijfers. Wilt u deze controles uitbesteden? Bekijk dan onze [ondersteuning bij financiële administratie](/diensten/#financiele-administratie).
 
 ## Bronnen
 
-- Belastingdienst, [Houd een goede administratie bij](https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/ondernemen/onderneming_starten/houd-een-goede-administratie-bij) — over de administratieplicht en de bewaarplicht van 7 jaar.
+- Ondernemersplein (KVK en overheid), [Administratie bijhouden en bewaren](https://ondernemersplein.overheid.nl/administratie-bijhouden-en-bewaren/) — over de fiscale bewaarplicht van 7 en 10 jaar. Geraadpleegd op 29 oktober 2026.
+- Belastingdienst, [Een administratie opzetten voor uw belastingaangiften](https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/ondernemen/administratie/een_administratie_opzetten) — over de administratieplicht van ondernemers. Geraadpleegd op 29 oktober 2026.

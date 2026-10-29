@@ -8,10 +8,10 @@ status: "concept"
 author: "Yukify Administratie & Support"
 imageAlt: "Illustratie van een btw-overzicht met percentages en documenten"
 reviewNotes: |
-  Controleer vóór goedkeuring op belastingdienst.nl (die site was tijdens het schrijven niet rechtstreeks te openen; feiten zijn bevestigd via zoekresultaten):
-  - De correctieregel: verschillen tot en met € 1.000 meestal in de volgende aangifte, daarboven een suppletie.
-  - De KOR-omzetgrens van € 20.000 per kalenderjaar.
-  - De termijn: aangifte en betaling uiterlijk de laatste dag van de maand na het aangiftetijdvak.
+  Automatische controle 29 oktober 2026: NIET gepubliceerd. Ontbreekt:
+  - Primaire bevestiging op belastingdienst.nl van de correctieregel (tot en met € 1.000 in de volgende aangifte, daarboven suppletie) en van de KOR-omzetgrens van € 20.000. Gevonden bevestiging komt alleen uit secundaire bronnen (Knab, Nextens, Informer, Rabobank); belastingdienst.nl was vanuit de redactieomgeving niet bereikbaar.
+  - Bedragen hebben nog geen bronlink in dezelfde alinea.
+  - Nieuw gevonden (secundair, nog niet verwerkt): sinds 1 januari 2025 een termijn van 8 weken om te weinig aangegeven btw te corrigeren. Eerst primair bevestigen.
   Dit artikel geeft algemene informatie en is geen fiscaal advies.
 ---
 

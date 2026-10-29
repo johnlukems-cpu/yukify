@@ -8,10 +8,9 @@ status: "concept"
 author: "Yukify Administratie & Support"
 imageAlt: "Illustratie van een geautomatiseerde verwerking van facturen met een controlestap"
 reviewNotes: |
-  Controleer vóór goedkeuring:
-  - De actuele stand van de AI-verordening en de 'digitale omnibus' (uitstel van verplichtingen) op EUR-Lex; berichtgeving over de publicatie in juli 2026 is via secundaire bronnen bevestigd.
-  - De Nederlandse plannen voor verplichte e-facturatie (kabinetsbrief september 2026): dit is een voornemen, nog geen wet.
-  - Of u de AP-waarschuwing liever via de eigen website van de AP wilt bronvermelden (die was tijdens het schrijven niet rechtstreeks te openen).
+  Automatische controle 29 oktober 2026: NIET gepubliceerd. Ontbreekt:
+  - Tekst is verouderd: volgens meerdere secundaire bronnen is het uitstel van de hoog-risicoverplichtingen (Digital Omnibus) in juni/juli 2026 formeel vastgesteld (nieuwe data 2 december 2027 en 2 augustus 2028; één bron noemt Verordening (EU) 2026/1744). Bijwerken na controle van de officiële tekst op EUR-Lex (niet bereikbaar vanuit de redactieomgeving).
+  - Bronnen missen een controledatum en de kabinetsplannen voor e-facturatie moeten opnieuw worden gecontroleerd op actualiteit.
 ---
 
 Steeds meer administratief werk gebeurt automatisch. Boekhoudsoftware leest facturen in, doet boekingsvoorstellen en koppelt betalingen aan openstaande posten. AI-assistenten helpen bij het samenvatten van documenten of het opstellen van teksten. Voor administratie- en accountantskantoren met een hoge werkdruk is dat aantrekkelijk. Tegelijk blijft de vraag: wie controleert de uitkomst, en wat gebeurt er met de gegevens?

@@ -16,6 +16,7 @@ import contact, { thanksPage, failedPage, notFoundPage } from '../src/pages/cont
 import { privacyPage, termsPage } from '../src/pages/legal.mjs';
 import { listingPages, articlePage, searchIndex } from '../src/pages/news.mjs';
 import { loadArticles, publicArticles, plainText, publicationDate, isPublic } from '../lib/news.mjs';
+import { qualityCheck, redactieConfig } from '../lib/quality.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 // BUILD_OUT_DIR, NEWS_CONTENT_DIR en BUILD_NOW zijn alleen voor tests en controles.
@@ -25,6 +26,12 @@ const now = process.env.BUILD_NOW ? new Date(process.env.BUILD_NOW) : new Date()
 // Nieuws: alleen goedgekeurde en vrijgegeven artikelen worden gebouwd (zie lib/news.mjs → isPublic).
 const allArticles = await loadArticles(join(root, process.env.NEWS_CONTENT_DIR || 'content/nieuws'));
 const pub = publicArticles(allArticles, now);
+// Vangnet: automatisch goedgekeurde artikelen moeten (nog steeds) door de kwaliteitscontrole, anders faalt de build
+// en blijft de vorige versie van de site online.
+for (const a of pub.filter((x) => x.approvedBy === redactieConfig.editorName)) {
+  const r = qualityCheck(a, { now: new Date(a.approvedAt), others: pub });
+  if (!r.ok) throw new Error(`Automatisch gepubliceerd artikel "${a.slug}" voldoet niet aan de kwaliteitscontrole: ${r.errors.join(' ')}`);
+}
 const articlePages = pub.map((a) => ({ ...articlePage(a, pub), lastmod: a.updated || publicationDate(a) }));
 
 const pages = [home, diensten, kantoren, mkb, over, faq, ...listingPages(pub), ...articlePages, contact, privacyPage, termsPage, thanksPage, failedPage, notFoundPage];

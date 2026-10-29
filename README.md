@@ -47,7 +47,7 @@ Controle: `https://<domein>/healthz` toont `"mail": true`, `"provider": "resend"
 
 ## Nieuws & Inzichten
 
-Artikelen staan in `content/nieuws/` en verschijnen **alleen** op de website als ze in `/beheer` door de eigenaar zijn goedgekeurd én gepubliceerd (of ingepland en het moment is verstreken). Concepten komen nooit in `dist/`, de sitemap of de zoekindex. Het beheer, de redactie-API voor Claude en de socialmediaworkflow zijn beschreven in [`docs/redactie-workflow.md`](docs/redactie-workflow.md), inclusief de omgevingsvariabelen die nog moeten worden ingesteld.
+Artikelen staan in `content/nieuws/`. De automatische redactie (geplande Claude-sessies, zie [`docs/redactie-playbook.md`](docs/redactie-playbook.md)) publiceert artikelen die alle kwaliteitscontroles in `lib/quality.mjs` doorstaan; de rest blijft concept met de open punten. Concepten komen nooit in `dist/`, de sitemap of de zoekindex. Aan/uit en einddatum: `content/redactie.json`. Werkwijze, beheer (`/beheer`), redactie-API en de nog in te stellen Vercel-variabelen: [`docs/redactie-workflow.md`](docs/redactie-workflow.md).
 
 ## Hosting
 

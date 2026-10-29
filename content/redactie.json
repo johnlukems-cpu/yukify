@@ -1,0 +1,35 @@
+{
+  "autopublish": true,
+  "autopublishUntil": "2026-12-31",
+  "editorName": "Automatische redactie Yukify",
+  "maxSourceAgeDays": 30,
+  "officialDomains": [
+    "belastingdienst.nl",
+    "rijksoverheid.nl",
+    "overheid.nl",
+    "officielebekendmakingen.nl",
+    "tweedekamer.nl",
+    "eerstekamer.nl",
+    "kvk.nl",
+    "rvo.nl",
+    "autoriteitpersoonsgegevens.nl",
+    "afm.nl",
+    "dnb.nl",
+    "cbs.nl",
+    "europa.eu",
+    "nba.nl",
+    "nob.net",
+    "register-belastingadviseurs.nl"
+  ],
+  "trustedDomains": [
+    "accountant.nl",
+    "accountancyvanmorgen.nl",
+    "taxence.nl",
+    "taxlive.nl",
+    "fd.nl",
+    "nos.nl",
+    "mkb.nl",
+    "sra.nl",
+    "novak.nl"
+  ]
+}

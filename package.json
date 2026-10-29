@@ -7,9 +7,10 @@
     "start": "node serve.mjs",
     "dev": "node scripts/build.mjs && node serve.mjs",
     "images": "node scripts/generate-images.mjs",
-    "test": "node scripts/build.mjs && node tests/run-tests.mjs && node tests/news-tests.mjs",
+    "test": "node scripts/build.mjs && node tests/redactie-tests.mjs && node tests/run-tests.mjs && node tests/news-tests.mjs",
     "images:nieuws": "node scripts/generate-news-images.mjs",
     "beheer:wachtwoord": "node scripts/beheer-wachtwoord.mjs",
+    "redactie": "node scripts/redactie.mjs",
     "mail:check": "node --env-file=.env.local scripts/check-mail.mjs"
   },
   "license": "UNLICENSED",

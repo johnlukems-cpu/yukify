@@ -156,15 +156,16 @@ try {
     check(idx.length === VISIBLE.length && idx.every((x) => !HIDDEN.some((h) => x.url.includes(h))), 'zoekindex: alleen openbare artikelen');
     const robots = await readFile(`${OUT}/robots.txt`, 'utf8');
     check(/^Disallow: \/beheer$/m.test(robots) && /^Disallow: \/api\/$/m.test(robots), 'robots.txt: /beheer en /api/ uitgesloten');
-    // Echte content: de drie conceptartikelen staan niet op de site
+    // Echte content: alleen artikelen die openbaar zijn (goedgekeurd/door de controle) staan op de site
     const real = await readdir('dist/nieuws');
-    const drafts = (await readdir('content/nieuws')).map((f) => f.replace(/\.md$/, ''));
-    check(drafts.length === 3 && drafts.every((d) => !real.includes(d)), 'echte build: de 3 conceptartikelen worden niet gepubliceerd');
-    for (const d of drafts) {
-      const a = parseArticle(await readFile(`content/nieuws/${d}.md`, 'utf8'), `${d}.md`);
-      check(a.status === 'concept' && !a.approvedBy && !isPublic(a, new Date('2100-01-01')), `concept "${a.title.slice(0, 40)}…": status concept, geen goedkeuring`);
+    const realIdx = JSON.parse(await readFile('dist/nieuws/zoekindex.json', 'utf8'));
+    const realSm = await readFile('dist/sitemap.xml', 'utf8');
+    for (const f of await readdir('content/nieuws')) {
+      const a = parseArticle(await readFile(`content/nieuws/${f}`, 'utf8'), f);
+      const pub = isPublic(a, new Date());
+      check(real.includes(a.slug) === pub && realIdx.some((x) => x.url.includes(a.slug)) === pub && realSm.includes(`/nieuws/${a.slug}/`) === pub, `echte build: "${a.title.slice(0, 40)}…" ${pub ? 'openbaar' : 'niet openbaar'} (${a.status})`);
+      if (!pub) check(!a.approvedBy && String(a.reviewNotes || '').length > 0, `concept "${a.slug}": geen goedkeuring, open punten vastgelegd`);
     }
-    check(JSON.parse(await readFile('dist/nieuws/zoekindex.json', 'utf8')).length === 0 && !(await readFile('dist/sitemap.xml', 'utf8')).match(/nieuws\/[a-z]/), 'echte build: zoekindex leeg en geen artikel-URL\'s in sitemap');
   }
 
   /* ---------- Overzicht ---------- */
@@ -429,7 +430,7 @@ try {
     check(r.status === 422, 'beheer: ongeldige categorie geweigerd');
 
     // Socialmedia
-    const s1 = 'financiele-administratie-op-orde-7-controles';
+    const s1 = 'ai-en-automatisering-financiele-administratie';
     r = await req('/beheer/social', { method: 'POST', cookie, body: form({ csrf, slug: s1, platform: 'linkedin', action: 'opslaan', text: 'Zeven controles voor een administratie die altijd op orde is. Lees het artikel.' }) });
     check(r.status === 303 && JSON.parse(repo.get(`content/social/${s1}.json`).text).platforms.linkedin.status === 'concept', 'social: concepttekst opgeslagen');
     r = await req('/beheer/social', { method: 'POST', cookie, body: form({ csrf, slug: s1, platform: 'linkedin', action: 'goedkeuren' }) });
@@ -500,7 +501,7 @@ try {
     await page.fill('#wachtwoord', PASSWORD);
     await page.click('button[type=submit]');
     await page.waitForSelector('table');
-    await page.click('a[href*="financiele-administratie-op-orde"]');
+    await page.click('a[href*="ai-en-automatisering-financiele"]');
     await page.waitForSelector('#status-titel');
     check(await page.isVisible('text=Ter goedkeuring aanbieden'), 'beheer-UI: statusacties zichtbaar');
     if (SHOTS) await page.screenshot({ path: 'test-results/screenshots/beheer-artikel.png', fullPage: true });

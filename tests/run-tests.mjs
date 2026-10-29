@@ -240,12 +240,13 @@ try {
     const EXPECTED_NOINDEX = ['/privacyverklaring/', '/algemene-voorwaarden/', '/contact/bedankt/', '/contact/niet-verzonden/', '/404.html'];
     const htmlOf = async (p) => readFile(p === '/404.html' ? 'dist/404.html' : `dist${p}index.html`, 'utf8');
     const attr = (html, re) => [...html.matchAll(re)].map((m) => m[1]);
-    // Lege categoriepagina's van Nieuws & Inzichten zijn bewust noindex (dun, zonder inhoud).
-    const { readdir: rdCat } = await import('node:fs/promises');
+    // Alle gebouwde nieuwspagina's (overzicht, categorieën, artikelen) meenemen; lege categorieën zijn bewust noindex.
+    const { readdir: rdNews } = await import('node:fs/promises');
+    const newsPaths = (await rdNews('dist/nieuws', { recursive: true })).filter((f) => f.endsWith('index.html')).map((f) => `/nieuws/${f.replace(/index\.html$/, '')}`);
     const emptyCats = [];
-    for (const c of await rdCat('dist/nieuws/categorie')) { const h = await readFile(`dist/nieuws/categorie/${c}/index.html`, 'utf8'); if (/noindex/.test(h)) emptyCats.push(`/nieuws/categorie/${c}/`); }
+    for (const p of newsPaths) if (/noindex/.test(await readFile(`dist${p}index.html`, 'utf8'))) emptyCats.push(p);
     EXPECTED_NOINDEX.push(...emptyCats);
-    const allPaths = [...new Set([...pages, ...emptyCats, '/404.html'])];
+    const allPaths = [...new Set([...pages, ...newsPaths, '/404.html'])];
     const indexable = [];
     for (const p of allPaths) {
       const html = await htmlOf(p);
@@ -256,7 +257,10 @@ try {
       if (!noindex) indexable.push(p);
       check(dup.length === 0 && count(/rel="canonical"/g) === (noindex ? 0 : 1), `${p}: elke SEO-tag precies één keer${dup.length ? ' — ' + dup.join(', ') : ''}`);
       check(!/name="keywords"/.test(html), `${p}: geen meta keywords`);
-      check(attr(html, /property="og:image" content="([^"]+)"/g)[0] === `${WWW}/assets/img/og-yukify.png` && attr(html, /name="twitter:image" content="([^"]+)"/g)[0] === `${WWW}/assets/img/og-yukify.png`, `${p}: OG/Twitter-afbeelding absolute https-URL op www`);
+      // Artikelen hebben een eigen OG-afbeelding per categorie; alle andere pagina's de standaardafbeelding.
+      const ogExpected = /^\/nieuws\/(?!categorie\/|pagina\/)[a-z0-9-]+\/$/.test(p) ? new RegExp(`^${WWW}/assets/img/nieuws/[a-z-]+\\.png$`) : new RegExp(`^${WWW}/assets/img/og-yukify\\.png$`);
+      const og = attr(html, /property="og:image" content="([^"]+)"/g)[0];
+      check(ogExpected.test(og) && attr(html, /name="twitter:image" content="([^"]+)"/g)[0] === og, `${p}: OG/Twitter-afbeelding absolute https-URL op www`);
       check(attr(html, /property="og:url" content="([^"]+)"/g)[0].startsWith(WWW + '/'), `${p}: og:url op www`);
       check(!/yukify\.vercel\.app|yukify\.nl|https:\/\/yukifyadministratie\.nl/.test(html), `${p}: geen oude of niet-voorkeursdomeinen`);
     }

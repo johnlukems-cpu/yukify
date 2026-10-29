@@ -290,7 +290,7 @@ strong { font-weight: 600; color: inherit; }
 .hero-grid > *, .split > *, .grid > *, .service-detail > *, .problem-list li > span, .feature > div { min-width: 0; }
 .hero-grid { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: clamp(2rem, 1rem + 4vw, 5rem); align-items: center; }
 .hero h1 { margin-bottom: var(--s-5); font-size: clamp(2rem, min(10.5vw, 1.2rem + 3.4vw), 3.5rem); text-wrap: wrap; }
-.hero-line { display: block; }
+.hero .hero-price { margin: calc(-1 * var(--s-3)) 0 var(--s-5); font-family: var(--font-head); font-size: var(--fs-sm); font-weight: 600; color: var(--gold-text); letter-spacing: 0.01em; }
 .hero .lead { margin-bottom: var(--s-6); }
 .hero-note { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-5); font-size: var(--fs-sm); color: var(--muted); }
 .hero-note svg { width: 18px; height: 18px; color: var(--gold-text); flex: none; }

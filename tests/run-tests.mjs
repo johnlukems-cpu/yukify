@@ -218,7 +218,8 @@ try {
       }
     }
     await page.goto(BASE + '/');
-    check((await page.textContent('#hero-titel')).replace(/\s+/g, ' ').trim() === 'Meer capaciteit. Minder administratieve druk.', 'hero-headline heeft de juiste tekst');
+    check((await page.textContent('#hero-titel')).replace(/\s+/g, ' ').trim() === 'Uw betrouwbare partner voor financiële backoffice', 'hero-headline heeft de juiste tekst');
+    check((await page.textContent('.hero .hero-price')).replace(/\s+/g, ' ').trim() === 'Vanaf € 12 per uur', 'hero toont klein "Vanaf € 12 per uur" onder de kop');
     await ctx.close();
   }
 
@@ -259,7 +260,7 @@ try {
     const home = await htmlOf('/');
     const meta = (name) => attr(home, new RegExp(`(?:name|property)="${name}" content="([^"]*)"`, 'g'))[0];
     const dec = (v) => v.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
-    check(attr(home, /<title>([^<]*)<\/title>/g)[0] === 'Yukify | Administratieve ondersteuning voor kantoren', 'home: title');
+    check(attr(home, /<title>([^<]*)<\/title>/g)[0] === 'Uw betrouwbare partner voor financiële backoffice', 'home: title');
     check(meta('description') === 'Yukify biedt administratieve ondersteuning op afstand voor administratie- en accountantskantoren. Meer capaciteit, minder administratieve druk. Ontdek onze ondersteuning.', 'home: meta description');
     check(attr(home, /rel="canonical" href="([^"]+)"/g)[0] === `${WWW}/`, 'home: canonical');
     check(meta('og:type') === 'website' && dec(meta('og:site_name')) === 'Yukify — Administratie & Support' && dec(meta('og:title')) === 'Yukify — Administratie & Support' && meta('og:url') === `${WWW}/` && meta('og:locale') === 'nl_NL', 'home: og:type/site_name/title/url/locale');

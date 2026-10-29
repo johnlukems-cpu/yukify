@@ -57,7 +57,7 @@ export const whyItems = [
 
 export default {
   path: '/',
-  title: 'Yukify | Administratieve ondersteuning voor kantoren',
+  title: 'Uw betrouwbare partner voor financiële backoffice',
   ogTitle: 'Yukify — Administratie & Support',
   ogDescription:
     'Meer capaciteit. Minder administratieve druk. Administratieve ondersteuning op afstand voor administratie- en accountantskantoren.',
@@ -68,7 +68,8 @@ export default {
   <div class="container hero-grid">
     <div>
       <p class="eyebrow">Administratie &amp; Support</p>
-      <h1 id="hero-titel"><span class="hero-line">Meer capaciteit.</span> <span class="hero-line">Minder administratieve druk.</span></h1>
+      <h1 id="hero-titel">Uw betrouwbare partner voor financiële backoffice</h1>
+      ${site.pricing.confirmed ? `<p class="hero-price">Vanaf&nbsp;€&nbsp;${site.pricing.hourlyFrom} per uur</p>` : ''}
       <p class="lead">Yukify ondersteunt Nederlandse administratie- en accountantskantoren bij het verwerken van financiële administraties. Zo creëer je extra capaciteit, houd je grip op je werkvoorraad en kun je je richten op je klanten.</p>
       <div class="btn-row">
         ${button('Plan een kennismaking', routes.contact, { variant: 'primary', arrow: true })}

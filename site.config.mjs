@@ -32,10 +32,10 @@ export default {
     instagram: '',
   },
 
-  // Voorgesteld starttarief. Alleen publiceren na definitieve bevestiging.
+  // Starttarief, bevestigd door de eigenaar: vanaf € 12 per uur.
   pricing: {
-    confirmed: false,
-    hourlyFrom: 15,
+    confirmed: true,
+    hourlyFrom: 12,
   },
 
   // Dienst 5 (procesverbetering en automatisering) alleen tonen als die echt wordt aangeboden.

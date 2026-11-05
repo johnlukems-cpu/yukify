@@ -72,7 +72,7 @@ Voor het contactformulier: zie *Contactformulier configureren* hierboven.
 Zie de schakelaars in `site.config.mjs`:
 
 - `social.linkedin` / `social.instagram` — vul de volledige https-URL van het officiële profiel in; de knoppen verschijnen dan automatisch in de footer en het mobiele menu. Ongeldige of lege URL's worden niet getoond.
-- `pricing.confirmed` / `pricing.hourlyFrom` — tarief (nu bevestigd: vanaf € 12 per uur).
+- `pricing.confirmed` / `pricing.hourlyFrom` — tarief (nu bevestigd: vanaf € 14 per uur).
 - `offersProcessImprovement` — dienst 5 (procesverbetering en automatisering).
 - `founder` — persoonlijke introductie en foto.
 - `legal.*` en `legal.final` — juridische naam, adres, inschrijvingsnummer, en controle van privacyverklaring en algemene voorwaarden (tot dan `noindex` met conceptmelding).

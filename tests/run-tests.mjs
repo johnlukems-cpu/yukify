@@ -220,7 +220,7 @@ try {
     }
     await page.goto(BASE + '/');
     check((await page.textContent('#hero-titel')).replace(/\s+/g, ' ').trim() === 'Uw betrouwbare partner voor financiële backoffice', 'hero-headline heeft de juiste tekst');
-    check((await page.textContent('.hero .hero-price')).replace(/\s+/g, ' ').trim() === 'Vanaf € 12 per uur', 'hero toont klein "Vanaf € 12 per uur" onder de kop');
+    check((await page.textContent('.hero .hero-price')).replace(/\s+/g, ' ').trim() === 'Vanaf € 14 per uur', 'hero toont klein "Vanaf € 14 per uur" onder de kop');
     await ctx.close();
   }
 

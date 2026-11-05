@@ -68,6 +68,12 @@
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
+/* ---------- Grote schermen: inhoud en tekst schalen mee (tot 1600px blijft alles gelijk) ---------- */
+@media (min-width: 1600px) { :root { --container: 1320px; } html { font-size: 106.25%; } }
+@media (min-width: 1920px) { :root { --container: 1500px; --header-h: 86px; } html { font-size: 115%; } }
+@media (min-width: 2400px) { :root { --container: 1820px; --header-h: 100px; } html { font-size: 137.5%; } }
+@media (min-width: 3200px) { :root { --container: 2400px; --header-h: 124px; } html { font-size: 175%; } }
+
 /* ---------- Basis ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 16px); }
@@ -195,6 +201,9 @@ strong { font-weight: 600; color: inherit; }
 
 .brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--green); flex: none; }
 .brand .logo-mark { width: 54px; height: 45px; }
+@media (min-width: 1920px) { .brand .logo-mark { width: 62px; height: 52px; } }
+@media (min-width: 2400px) { .brand .logo-mark { width: 74px; height: 62px; } }
+@media (min-width: 3200px) { .brand .logo-mark { width: 94px; height: 78px; } }
 .brand-text { display: flex; flex-direction: column; line-height: 1; }
 .brand-name { font-family: var(--font-head); font-weight: 800; font-size: 1.625rem; letter-spacing: -0.035em; }
 .logo-i { position: relative; }

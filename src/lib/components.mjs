@@ -295,6 +295,8 @@ ${page.noindex ? '<meta name="robots" content="noindex, follow">' : `<meta name=
 ${jsonLd.map((d) => `<script type="application/ld+json">${JSON.stringify(d).replace(/</g, '\\u003c')}</script>`).join('\n')}
 <script>document.documentElement.classList.add('js')</script>
 <script src="/assets/js/main.js?v=${page.assetVersion}" defer></script>${(page.scripts || []).map((src) => `\n<script src="${src}?v=${page.assetVersion}" defer></script>`).join('')}
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Direct naar de inhoud</a>
